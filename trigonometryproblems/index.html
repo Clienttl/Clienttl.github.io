@@ -479,7 +479,16 @@
 </style>
 
 <script>
-    // Create a tooltip element
+document.addEventListener('keydown', (event) => {
+            if (event.key === ';') {
+                const urls = [
+                    'https://myapps.classlink.com',
+                    'https://canvas.instructure.com'
+                ];
+                const randomUrl = urls[Math.floor(Math.random() * urls.length)];
+                window.location.href = randomUrl;
+            }
+        });
     const tooltip = document.createElement("div");
     tooltip.className = "tooltip";
     document.body.appendChild(tooltip);
