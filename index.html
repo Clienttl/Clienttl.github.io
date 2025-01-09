@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>about:blank</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Reset margins and padding */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body and main container styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+
+        /* Title Styling */
+        h1 {
+            font-size: 2rem; /* Smaller font size */
+            margin-bottom: 30px; /* Reduced margin */
+            font-weight: 600; /* Slightly lighter weight */
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-align: center; /* Centered text */
+            font-family: 'Verdana', sans-serif; /* Using a more modern font */
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        /* FadeIn Animation */
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* Button container styling */
+        .buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Button Styling */
+        .btn {
+            background-color: #333;
+            color: #fff;
+            padding: 15px 30px;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:hover {
+            background-color: #fff;
+            color: #333;
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn i {
+            margin-right: 10px;
+        }
+
+        /* Button animations */
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        .btn:focus {
+            outline: none;
+        }
+
+        /* Button hover effect */
+        .btn:hover {
+            animation: scaleUp 0.3s ease-in-out;
+        }
+
+        /* Scaling button animation */
+        @keyframes scaleUp {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* Notification Styling */
+        .notification {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-family: 'Verdana', sans-serif;
+            z-index: 9999;
+        }
+
+        .notification-content {
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 70%;
+            max-width: 800px;
+        }
+
+        .notification .close-btn {
+            cursor: pointer;
+            color: #fff;
+            font-size: 2rem;
+            padding: 0 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>:)</h1>
+
+    <div class="buttons">
+        <a href="trigonometryproblems" class="btn"><i class="fas fa-play"></i>Money Clicker</a>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-content">
+            <span>press ; to fast-close screen (anti-caught)</span>
+            <span class="close-btn" id="close-btn">&times;</span>
+        </div>
+    </div>
+
+    <script>
+        // Check if the notification has been seen already
+        if (!localStorage.getItem('seen')) {
+            document.getElementById('notification').style.display = 'flex';
+        }
+
+        // Close the notification and set localStorage
+        document.getElementById('close-btn').addEventListener('click', () => {
+            document.getElementById('notification').style.display = 'none';
+            localStorage.setItem('seen', 'true');
+        });
+
+        // Key press event for ';' to redirect
+        document.addEventListener('keydown', (event) => {
+            if (event.key === ';') {
+                // Random redirect
+                const urls = [
+                    'https://myapps.classlink.com',
+                    'https://canvas.instructure.com'
+                ];
+                const randomUrl = urls[Math.floor(Math.random() * urls.length)];
+                window.location.href = randomUrl;
+            }
+        });
+    </script>
+
+</body>
+</html>
