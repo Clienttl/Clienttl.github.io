@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dollar Clicker</title>
+    <style>
+        /* Import custom font */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #2f2f2f; /* Default dark mode */
+            color: white;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+        }
+
+        /* Light mode styles */
+        body.light-mode {
+            background-color: #fff;
+            color: black;
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+        }
+
+        #clickable-image {
+            width: 150px;
+            height: 150px;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+        }
+
+        #clickable-image:active {
+            transform: scale(1.2);
+            transition: transform 0.1s ease-out;
+        }
+
+        #dollars {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+
+        #shop {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-family: 'Poppins', Arial, sans-serif;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        #shop:hover {
+            background-color: #777;
+            transform: scale(1.1);
+        }
+
+        #shop-sidebar {
+            position: fixed;
+            top: 0;
+            right: -250px;
+            width: 250px;
+            height: 100%;
+            background-color: #333;
+            transition: right 0.3s ease;
+            padding: 20px;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+            animation: slideIn 1s ease forwards;
+        }
+
+        #dps-counter {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 5px;
+            animation: fadeIn 1.5s ease forwards;
+        }
+
+        #tutorial-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        #tutorial-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Sun/Moon button in bottom-right */
+        #theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 60px;
+            font-size: 30px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        /* Reset Data button */
+        #reset-data {
+            position: fixed;
+            bottom: 20px;
+            right: 120px;
+            font-size: 20px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        /* Hover effect */
+        #theme-toggle:hover, #reset-data:hover {
+            transform: scale(1.2);
+        }
+
+        /* Tutorial Modal */
+        #tutorial-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 30px;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        #tutorial-content {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 5px;
+            width: 60%;
+            margin: auto;
+        }
+
+        #tutorial-modal button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #tutorial-modal button:hover {
+            background-color: #777;
+        }
+
+        /* Confirmation Modal */
+        #confirmation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 30px;
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        #confirmation-content {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 5px;
+            width: 60%;
+            margin: auto;
+        }
+
+        #confirmation-content button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #confirmation-content button:hover {
+            background-color: #777;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                right: -250px;
+            }
+            to {
+                right: 0;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="banknote.jpg" alt="clickable-image" id="clickable-image">
+        <div id="dollars">Dollars: $0</div>
+        <button id="shop">Open Shop</button>
+    </div>
+
+    <!-- Shop Sidebar -->
+    <div id="shop-sidebar">
+        <h2>Shop</h2>
+        <ul>
+            <li>
+                <button id="buy-money-grabber">Money Grabber</button>
+                <span id="money-grabber-price">Price: $100</span>
+            </li>
+            <li>
+                <button id="buy-money-printer">Money Printer</button>
+                <span id="money-printer-price">Price: $500</span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- DPS Counter -->
+    <div id="dps-counter">DPS: 0</div>
+
+    <!-- Tutorial Button -->
+    <button id="tutorial-btn">Click Here For Tutorial</button>
+
+    <!-- Sun/Moon Theme Toggle Button -->
+    <button id="theme-toggle">🌙</button>
+
+    <!-- Reset Data Button -->
+    <button id="reset-data">Reset Data</button>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorial-modal">
+        <div id="tutorial-content">
+            <h2>How to Play</h2>
+            <p>Welcome to Dollar Clicker! Here's how to play:</p>
+            <ul>
+                <li>Click on the banknote image to earn dollars.</li>
+                <li>Open the shop by clicking the "Open Shop" button.</li>
+                <li>In the shop, you can buy items like the "Money Grabber" and the "Money Printer" to increase your earnings.</li>
+                <li>Click on the description of each item to learn more about what it does and how it helps you earn more money!</li>
+            </ul>
+            <button id="close-tutorial">Close Tutorial</button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal">
+        <div id="confirmation-content">
+            <h2>Are you sure you want to reset your progress?</h2>
+            <button id="confirm-reset">Yes</button>
+            <button id="cancel-reset">No</button>
+        </div>
+    </div>
+
+    <script>
+        // Retrieve data from localStorage
+        let dollars = localStorage.getItem("dollars") ? parseInt(localStorage.getItem("dollars")) : 0;
+        let dps = localStorage.getItem("dps") ? parseInt(localStorage.getItem("dps")) : 0;
+        let dpc = localStorage.getItem("dpc") ? parseInt(localStorage.getItem("dpc")) : 1;
+        let moneyGrabberPrice = localStorage.getItem("moneyGrabberPrice") ? parseInt(localStorage.getItem("moneyGrabberPrice")) : 100;
+        let moneyPrinterPrice = localStorage.getItem("moneyPrinterPrice") ? parseInt(localStorage.getItem("moneyPrinterPrice")) : 500;
+
+        // Elements
+        const clickableImage = document.getElementById("clickable-image");
+        const dollarsDisplay = document.getElementById("dollars");
+        const shopButton = document.getElementById("shop");
+        const shopSidebar = document.getElementById("shop-sidebar");
+        const buyMoneyGrabberButton = document.getElementById("buy-money-grabber");
+        const buyMoneyPrinterButton = document.getElementById("buy-money-printer");
+        const dpsCounter = document.getElementById("dps-counter");
+        const moneyGrabberPriceDisplay = document.getElementById("money-grabber-price");
+        const moneyPrinterPriceDisplay = document.getElementById("money-printer-price");
+        const tutorialBtn = document.getElementById("tutorial-btn");
+        const tutorialModal = document.getElementById("tutorial-modal");
+        const closeTutorialBtn = document.getElementById("close-tutorial");
+        const themeToggleButton = document.getElementById("theme-toggle");
+        const resetDataButton = document.getElementById("reset-data");
+        const confirmationModal = document.getElementById("confirmation-modal");
+        const confirmResetButton = document.getElementById("confirm-reset");
+        const cancelResetButton = document.getElementById("cancel-reset");
+
+        // Function to update the dollar display and save to localStorage
+        function updateDollars() {
+            dollarsDisplay.textContent = "Dollars: $" + dollars;
+            localStorage.setItem("dollars", dollars);
+        }
+
+        // Function to update DPS and save to localStorage
+        function updateDPS() {
+            dpsCounter.textContent = "DPS: " + dps + " | DPC: " + dpc;
+            localStorage.setItem("dps", dps);
+            localStorage.setItem("dpc", dpc);
+        }
+
+        // Initialize the display
+        updateDollars();
+        updateDPS();
+        moneyGrabberPriceDisplay.textContent = "Price: $" + moneyGrabberPrice;
+        moneyPrinterPriceDisplay.textContent = "Price: $" + moneyPrinterPrice;
+
+        // Function to toggle between light and dark mode
+        function toggleTheme() {
+            if (document.body.classList.contains("light-mode")) {
+                document.body.classList.remove("light-mode");
+                themeToggleButton.textContent = "🌙"; // Moon icon for dark mode
+                localStorage.setItem("theme", "dark");
+            } else {
+                document.body.classList.add("light-mode");
+                themeToggleButton.textContent = "🌞"; // Sun icon for light mode
+                localStorage.setItem("theme", "light");
+            }
+        }
+
+        // Event listener for theme toggle
+        themeToggleButton.addEventListener("click", toggleTheme);
+
+        // Event listener for tutorial button
+        tutorialBtn.addEventListener("click", function() {
+            tutorialModal.style.display = "flex";
+        });
+
+        // Event listener for closing tutorial modal
+        closeTutorialBtn.addEventListener("click", function() {
+            tutorialModal.style.display = "none";
+        });
+
+        // Reset Data button functionality
+        resetDataButton.addEventListener("click", function() {
+            confirmationModal.style.display = "flex"; // Show confirmation modal
+        });
+
+        // Confirm reset action
+        confirmResetButton.addEventListener("click", function() {
+            // Reset everything
+            localStorage.clear();
+            dollars = 0;
+            dps = 0;
+            dpc = 1;
+            moneyGrabberPrice = 100;
+            moneyPrinterPrice = 500;
+
+            // Update the display immediately
+            updateDollars();
+            updateDPS();
+            moneyGrabberPriceDisplay.textContent = "Price: $" + moneyGrabberPrice;
+            moneyPrinterPriceDisplay.textContent = "Price: $" + moneyPrinterPrice;
+
+            confirmationModal.style.display = "none"; // Hide confirmation modal
+        });
+
+        // Cancel reset action
+        cancelResetButton.addEventListener("click", function() {
+            confirmationModal.style.display = "none"; // Hide confirmation modal
+        });
+
+        // Function to increase dollars and animate the image on click
+        clickableImage.addEventListener("click", function() {
+            dollars += dpc;
+            updateDollars();
+            clickableImage.style.transform = "scale(1.2)";
+            setTimeout(function() {
+                clickableImage.style.transform = "scale(1)";
+            }, 200);
+        });
+
+        // Toggle shop sidebar visibility
+        shopButton.addEventListener("click", function() {
+            if (shopSidebar.style.right === "0px") {
+                shopSidebar.style.right = "-250px";
+            } else {
+                shopSidebar.style.right = "0px";
+            }
+        });
+
+        // Money Grabber Purchase
+        buyMoneyGrabberButton.addEventListener("click", function() {
+            if (dollars >= moneyGrabberPrice) {
+                dollars -= moneyGrabberPrice;
+                updateDollars();
+                dps += 1;
+                updateDPS();
+                moneyGrabberPrice = Math.round(moneyGrabberPrice * 1.12);
+                moneyGrabberPriceDisplay.textContent = "Price: $" + moneyGrabberPrice;
+                localStorage.setItem("moneyGrabberPrice", moneyGrabberPrice);
+            }
+        });
+
+        // Money Printer Purchase
+        buyMoneyPrinterButton.addEventListener("click", function() {
+            if (dollars >= moneyPrinterPrice) {
+                dollars -= moneyPrinterPrice;
+                updateDollars();
+                dpc += 1;
+                updateDPS();
+                moneyPrinterPrice = Math.round(moneyPrinterPrice * 1.12);
+                moneyPrinterPriceDisplay.textContent = "Price: $" + moneyPrinterPrice;
+                localStorage.setItem("moneyPrinterPrice", moneyPrinterPrice);
+            }
+        });
+
+        // Automatic dollar increment based on DPS
+        setInterval(function() {
+            if (dps > 0) {
+                dollars += dps;
+                updateDollars();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
+<!-- Add this style for the tooltip -->
+<style>
+    .tooltip {
+        position: absolute;
+        background-color: #444;
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 14px;
+        display: none;
+        z-index: 1000;
+    }
+</style>
+
+<script>
+    // Create a tooltip element
+    const tooltip = document.createElement("div");
+    tooltip.className = "tooltip";
+    document.body.appendChild(tooltip);
+
+    // Shop item descriptions
+    const shopItemDescriptions = {
+        "buy-money-grabber": "The Money Grabber earns $1 per second for you!",
+        "buy-money-printer": "The Money Printer increases your click earnings by $1!"
+    };
+
+    // Add event listeners to shop items for hover
+    Object.keys(shopItemDescriptions).forEach(id => {
+        const shopItem = document.getElementById(id);
+        const description = shopItemDescriptions[id];
+
+        shopItem.addEventListener("mouseenter", (event) => {
+            tooltip.textContent = description;
+            tooltip.style.display = "block";
+            tooltip.style.left = `${event.pageX + 10}px`;
+            tooltip.style.top = `${event.pageY + 10}px`;
+        });
+
+        shopItem.addEventListener("mousemove", (event) => {
+            tooltip.style.left = `${event.pageX + 10}px`;
+            tooltip.style.top = `${event.pageY + 10}px`;
+        });
+
+        shopItem.addEventListener("mouseleave", () => {
+            tooltip.style.display = "none";
+        });
+    });
+</script>
+</body>
+</html>
