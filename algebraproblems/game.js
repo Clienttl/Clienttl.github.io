@@ -4,6 +4,18 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// specialty >.<
+document.addEventListener('keydown', (event) => {
+            if (event.key === ';') {
+                const urls = [
+                    'https://myapps.classlink.com',
+                    'https://canvas.instructure.com'
+                ];
+                const randomUrl = urls[Math.floor(Math.random() * urls.length)];
+                window.location.href = randomUrl;
+            }
+});
+
 let pops = 0;
 let lives = 1;
 let balloons = [];
