@@ -15,6 +15,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            flex-direction: column;
         }
         .a {
             text-align: center;
@@ -32,15 +33,21 @@
         .b:hover {
             background-color: #555;
         }
+        .notice {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #ff0000;
+        }
     </style>
 </head>
 <body>
     <div class="a">
-        <button class="b" onclick="c()">generate link updated 1/15/25</button>
+        <button class="b" onclick="openLinks()">Generate Links Updated 1/15/25</button>
+        <p class="notice">If the links do not open, please allow popups in chrome [top right of search bar]</p>
     </div>
     <script>
-        function c() {
-            var d = [
+        function openLinks() {
+            var links = [
                 'https://mathlover.safira.com.my/',
                 'https://thisforcinco.larrondoinstalaciones.cl/',
                 'https://math.for.kids22.7s.com.tr/',
@@ -48,8 +55,8 @@
                 'https://education-lesson-pre-algebra-lesson68.eduarmor.com/'
             ];
 
-            d.forEach(function(e) {
-                var newWindow = window.open(e, '_blank');
+            links.forEach(function(link) {
+                var newWindow = window.open(link, '_blank');
                 if (newWindow) newWindow.focus();
             });
         }
