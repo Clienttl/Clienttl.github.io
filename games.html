@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>about:blank</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" crossorigin="anonymous"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(180deg, #444, #000);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 30px;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Adds spacing between buttons */
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px; /* Proper spacing between icon and text */
+            padding: 15px 50px;
+            background: linear-gradient(90deg, #333, #111);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            border-radius: 50px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            width: 250px;
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+            background: linear-gradient(90deg, #222, #000);
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #444, #000);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .loading-logo {
+            width: 80px;
+            height: 80px;
+            border: 6px solid white;
+            border-top: 6px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>:D</h1>
+    
+    <div class="button-container">
+        <button class="btn" onclick="startLoading('55gms.html')">
+            <i class="fas fa-fire"></i> 55gms
+        </button>
+        <button class="btn" onclick="startLoading('pizza.html')">
+            <i class="fas fa-bolt"></i> pizza
+        </button>
+        <button class="btn" onclick="startLoading('diy.html')">
+            <i class="fas fa-chain"></i> diy
+        </button>
+        <button class="btn" onclick="startLoading('archived.html')">
+            <i class="fas fa-lock"></i> archived
+        </button>
+    </div>
+
+
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo"></div>
+    </div>
+
+    <script>
+        function startLoading(url) {
+            document.querySelector("h1").style.display = "none";
+            document.querySelector(".button-container").style.display = "none";
+            document.getElementById('loadingScreen').style.display = 'flex';
+
+            setTimeout(() => {
+                window.location.href = url; 
+            }, 1000);
+        }
+    </script>
+
+</body>
+</html>
