@@ -37,6 +37,7 @@
             text-transform: uppercase;
             font-weight: bold;
             letter-spacing: 1px;
+            margin: 10px;
         }
 
         .btn:hover {
@@ -44,11 +45,39 @@
             transform: scale(1.05);
             background: linear-gradient(90deg, #222, #000);
         }
+
+        .saved-links-container {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .saved-links-container a {
+            display: block;
+            color: cyan;
+            margin: 5px 0;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
 
     <button class="btn" onclick="generateLink()">Generate</button>
+    <button class="btn" onclick="toggleSavedLinks()">Saved</button>
+
+    <div class="saved-links-container" id="savedLinks">
+        <h3>Saved Links</h3>
+        <div id="linksList"></div>
+    </div>
 
     <script>
         function generateLink() {
@@ -61,8 +90,32 @@
 
             const url = `https://teachingworksheets.org.${randomSubdomain}.totallyeducational.homes`;
             window.open(url, '_blank');
+            let savedLinks = JSON.parse(localStorage.getItem("generatedLinks")) || [];
+            savedLinks.push(url);
+            localStorage.setItem("generatedLinks", JSON.stringify(savedLinks));
+        }
+
+        function toggleSavedLinks() {
+            const container = document.getElementById("savedLinks");
+            const linksList = document.getElementById("linksList");
+            
+            if (container.style.display === "none" || container.style.display === "") {
+                linksList.innerHTML = "";
+                let savedLinks = JSON.parse(localStorage.getItem("generatedLinks")) || [];
+                
+                savedLinks.forEach(link => {
+                    const a = document.createElement("a");
+                    a.href = link;
+                    a.target = "_blank";
+                    a.textContent = link;
+                    linksList.appendChild(a);
+                });
+                
+                container.style.display = "block";
+            } else {
+                container.style.display = "none";
+            }
         }
     </script>
-
 </body>
 </html>
