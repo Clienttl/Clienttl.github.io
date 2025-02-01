@@ -52,16 +52,15 @@
 
     <script>
         function generateLink() {
-            const links = [
-                "https://baduwbiwwqi.sunsetworksheets.online/",
-                "https://baduwbdwqiwwqi.sunsetworksheets.online/",
-                "https://baduwbwqd12d12d1iwwqi.sunsetworksheets.online/",
-                "https://baduwbuuhiuwqi.sunsetworksheets.online/",
-                "https://yugdwyu.sunsetworksheets.online/"
-            ];
-            
-            const randomIndex = Math.floor(Math.random() * links.length);
-            window.open(links[randomIndex], '_blank');
+            const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
+            let randomSubdomain = "";
+
+            for (let i = 0; i < Math.floor(Math.random() * 10) + 3; i++) { 
+                randomSubdomain += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+
+            const url = `https://${randomSubdomain}.sunsetworksheets.online/`;
+            window.open(url, '_blank');
         }
     </script>
 
