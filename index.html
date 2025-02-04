@@ -27,15 +27,16 @@
 
         h1 {
             font-size: 3rem;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             animation: fadeIn 1.5s ease-in-out;
         }
 
         .button-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            gap: 15px; /* Adds spacing between buttons */
             align-items: center;
-            margin-top: 10px;
+            margin-top: 20px;
         }
 
         .btn {
@@ -57,6 +58,7 @@
             letter-spacing: 1px;
             position: relative;
             overflow: hidden;
+            width: 250px;
         }
 
         .btn:hover {
@@ -101,26 +103,31 @@
 </head>
 <body>
 
-    <h1>:D</h1>
+    <h1>chatroom live</h1>
     
     <div class="button-container">
-        <button class="btn" onclick="startLoading()">
-            <i class="fas fa-rocket"></i> play
+        <button class="btn" onclick="startLoading('games.html')">
+            <i class="fas fa-fire"></i> Play
         </button>
-    </div>
+    <div class="button-container">
+        <button class="btn" onclick="startLoading('chat.html')">
+            <i class="fas fa-fire"></i> Chatroom
+        </button>
+
+
 
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-logo"></div>
     </div>
 
     <script>
-        function startLoading() {
+        function startLoading(url) {
             document.querySelector("h1").style.display = "none";
             document.querySelector(".button-container").style.display = "none";
             document.getElementById('loadingScreen').style.display = 'flex';
 
             setTimeout(() => {
-                window.location.href = "games.html"; 
+                window.location.href = url; 
             }, 1000);
         }
     </script>
