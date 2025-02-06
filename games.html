@@ -131,13 +131,13 @@
             const container = document.querySelector('.gif-container');
             container.innerHTML = '';
             
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 50; i++) {
                 let img = document.createElement('img');
                 img.src = '/n.png';
                 img.style.left = `${Math.random() * (window.innerWidth - 100)}px`;
                 img.style.top = `${Math.random() * (window.innerHeight - 100)}px`;
                 container.appendChild(img);
-                setTimeout(() => img.remove(), 1500);
+                setTimeout(() => img.remove(), 5000);
             }
         }
     </script>
