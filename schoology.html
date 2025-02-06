@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeMode</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #ffcc00;
+        }
+        .copy-box {
+            background-color: #222;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            word-wrap: break-word;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .copy-box:hover {
+            background-color: #333;
+        }
+        button {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #444;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to SafeMode!</h1>
+    <p>None of the sites go in your browser history!</p>
+    <h2>Steps to do it:</h2>
+    <p>1. Click the box below to copy the code.</p>
+    <div class="copy-box" id="copyText" onclick="copyToClipboard()">
+        data:text/html;charset=utf-8,%3C!DOCTYPE%20html%3E%0A%3Chtml%20lang%3D%22en%22%3E%0A%3C!--%20title%20--%3E%0A%3Chead%3E%0A%20%20%3Cmeta%20charset%3D%22UTF-8%22%3E%0A%20%20%3Cmeta%20name%3D%22viewport%22%20content%3D%22width%3Ddevice-width%2C%20initial-scale%3D1.0%22%3E%0A%20%20%3Ctitle%3EGGlauncherV6%3C%2Ftitle%3E%0A%3C%2Fhead%3E%0A%3C!--%20style%20--%3E%0A%3Cbody%3E%0A%20%20%3Chead%3E%0A%20%20%20%20%3Cstyle%3E%0A%20%20%20%20%20%20.scroll-container%20%7B%0A%20%20%20%20%20%20%20%20width%3A%20100%25%3B%0A%20%20%20%20%20%20%20%20overflow-x%3A%20auto%3B%20%0A%20%20%20%20%20%20%20%20white-space%3A%20nowrap%3B%20%0A%20%20%20%20%20%20%20%20padding%3A%2010px%200%3B%0A%20%20%20%20%20%20%20%20border%3A%20none%20%0A%20%20%20%20%20%20%7D%0A%20%20%0A%20%20%20%20%20%20.scroll-content%20%7B%0A%20%20%20%20%20%20%20%20display%3A%20inline-flex%3B%20%0A%20%20%20%20%20%20%7D%0A%20%20%0A%20%20%20%20%20%20.button%20%7B%0A%20%20%20%20%20%20%20%20margin-right%3A%2010px%3B%20%0A%20%20%20%20%20%20%20%20padding%3A%2010px%2020px%3B%0A%20%20%20%20%20%20%20%20background-color%3A%20%23000000%3B%0A%20%20%20%20%20%20%20%20color%3A%20white%3B%0A%20%20%20%20%20%20%20%20border%3A%20none%3B%0A%20%20%20%20%20%20%20%20border-radius%3A%205px%3B%0A%20%20%20%20%20%20%20%20cursor%3A%20pointer%3B%0A%20%20%20%20%20%20%20%20font-size%3A%2014px%3B%0A%20%20%20%20%20%20%7D%0A%20%20%0A%20%20%20%20%20%20.button%3Ahover%20%7B%0A%20%20%20%20%20%20%20%20background-color%3A%20%238345a0%3B%0A%20%20%20%20%20%20%7D%0A%0A%20%20%20%20%20%20%23fullscreenButton%20%7B%0A%20%20%20%20%20%20%20%20position%3A%20fixed%3B%0A%20%20%20%20%20%20%20%20bottom%3A%2010px%3B%0A%20%20%20%20%20%20%20%20left%3A%2050%25%3B%0A%20%20%20%20%20%20%20%20transform%3A%20translateX(-50%25)%3B%0A%20%20%20%20%20%20%20%20background-color%3A%20%23000%3B%0A%20%20%20%20%20%20%20%20color%3A%20white%3B%0A%20%20%20%20%20%20%20%20padding%3A%2015px%2030px%3B%0A%20%20%20%20%20%20%20%20font-size%3A%2016px%3B%0A%20%20%20%20%20%20%20%20border%3A%20none%3B%0A%20%20%20%20%20%20%20%20border-radius%3A%205px%3B%0A%20%20%20%20%20%20%20%20cursor%3A%20pointer%3B%0A%20%20%20%20%20%20%7D%0A%0A%20%20%20%20%20%20%23fullscreenButton%3Ahover%20%7B%0A%20%20%20%20%20%20%20%20background-color%3A%20%238345a0%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%3C%2Fstyle%3E%0A%20%20%3C%2Fhead%3E%0A%20%20%3C!--buttons--%3E%0A%20%20%3Cbody%3E%0A%20%20%20%20%3Cdiv%20class%3D%22scroll-container%22%3E%0A%20%20%20%20%20%20%3Cdiv%20class%3D%22scroll-content%22%3E%0A%20%20%20%20%20%20%20%20%3Cimg%20src%3D%22https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F0%2F01%2FGGlauncherV6_spin.gif%22%20alt%3D%22logo%22%20style%3D%22width%3A%2050px%3B%20height%3A%2050px%3B%22%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Feducationworld.neocities.org')%22%3EEXTHANG3R%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fdeadshot.io')%22%3Edeadshot%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Ftrigonometry.site')%22%3Eszvy%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fcooking.konpan.ch%2F')%22%3EShadowV3%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fripdoge2024.mindboggle.us%2F')%22%3Epizzaedition%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fbtc.orenbayanyazma.com.tr%2Findex.html')%22%3Educkhtml%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fzva-c.global.ssl.fastly.net%2F')%22%3EUS4%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Ftbg95.s3.amazonaws.com%2Findex.html')%22%3Etbg95%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fstickmanfighter.online%2F')%22%3Estickmanfighter%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fdidhe.party.jlengineering.se')%22%3ESPACE%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Frobloxunblocked.s3.amazonaws.com%2Findex.html')%22%3Erobloxunblocked%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fbflixz.org%2Fmovie%2F')%22%3EBflix%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fio-games-unblocked.s3.amazonaws.com%2Fgo%2Fdrifthunters.html')%22%3Eiogames%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fdemo.emulatorjs.org%2F')%22%3EemulatorJS%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fconnectionsnyt.com%2Fhot-games')%22%3Econnectionsnyt%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fbulletbros.org')%22%3Ebulletbros%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fkrunker.io')%22%3Ekrunker%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Ffreelearn.neocities.org%2F')%22%3Efreelearn%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Ffsh.zone')%22%3Efsh%20zone%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fsupersurge.apollohypnotherapy.co.uk%2F')%22%3Elight%3C%2Fbutton%3E%0A%20%20%20%20%20%20%20%20%3Cbutton%20class%3D%22button%22%20onclick%3D%22changeIframe('https%3A%2F%2Fev.io%2F')%22%3Eev.io%3C%2Fbutton%3E%0A%20%20%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%3C%2Fdiv%3E%0A%0A%20%20%20%20%3Ciframe%20id%3D%22myIframe%22%20src%3D%22%22%20width%3D%22100%25%22%20style%3D%22border%3Ablack%3B%22%20allowfullscreen%3E%3C%2Fiframe%3E%0A%20%20%20%20%0A%20%20%20%20%3Cbutton%20id%3D%22fullscreenButton%22%20onclick%3D%22toggleFullscreen()%22%3EGo%20Fullscreen%3C%2Fbutton%3E%0A%20%20%0A%0A%20%20%20%20%3C!--%20scripts%20--%3E%0A%20%20%20%20%3Cscript%3E%0A%20%20%20%20%20%20document.addEventListener('keydown'%2C%20function%20(event)%20%7B%0A%20%20%20%20%20%20%20%20%20%20if%20(event.code%20%3D%3D%3D%20'Backspace')%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20window.location.href%20%3D%20'https%3A%2F%2Fwww.google.com'%3B%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D)%3B%0A%20%20%20%20%20%20%0A%20%20%20%20%20%20function%20changeIframe(url)%20%7B%0A%20%20%20%20%20%20%20%20var%20iframe%20%3D%20document.getElementById('myIframe')%3B%0A%20%20%20%20%20%20%20%20iframe.src%20%3D%20url%3B%0A%0A%20%20%20%20%20%20%20%20iframe.style.height%20%3D%20window.innerHeight%20%2B%20'px'%3B%0A%20%20%20%20%20%20%7D%0A%0A%20%20%20%20%20%20window.onload%20%3D%20function()%20%7B%0A%20%20%20%20%20%20%20%20document.getElementById('myIframe').style.height%20%3D%20window.innerHeight%20%2B%20'px'%3B%0A%20%20%20%20%20%20%7D%3B%0A%0A%20%20%20%20%20%20window.onresize%20%3D%20function()%20%7B%0A%20%20%20%20%20%20%20%20document.getElementById('myIframe').style.height%20%3D%20window.innerHeight%20%2B%20'px'%3B%0A%20%20%20%20%20%20%7D%3B%0A%0A%20%20%20%20%20%20function%20toggleFullscreen()%20%7B%0A%20%20%20%20%20%20%20%20var%20iframe%20%3D%20document.getElementById('myIframe')%3B%0A%20%20%20%20%20%20%20%20if%20(iframe.requestFullscreen)%20%7B%0A%20%20%20%20%20%20%20%20%20%20iframe.requestFullscreen()%3B%0A%20%20%20%20%20%20%20%20%7D%20else%20if%20(iframe.mozRequestFullScreen)%20%7B%20%0A%20%20%20%20%20%20%20%20%20%20iframe.mozRequestFullScreen()%3B%0A%20%20%20%20%20%20%20%20%7D%20else%20if%20(iframe.webkitRequestFullscreen)%20%7B%20%0A%20%20%20%20%20%20%20%20%20%20iframe.webkitRequestFullscreen()%3B%0A%20%20%20%20%20%20%20%20%7D%20else%20if%20(iframe.msRequestFullscreen)%20%7B%20%0A%20%20%20%20%20%20%20%20%20%20iframe.msRequestFullscreen()%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%3C%2Fscript%3E%0A%0A%20%20%20%20%3C!--%20background%20image%20--%3E%0A%20%20%20%20%3Cstyle%3E%0A%20%20%20%20%20%20body%20%7B%0A%20%20%20%20%20%20%20%20background-repeat%3A%20no-repeat%3B%0A%20%20%20%20%20%20%20%20background-size%3A%20100%25%20100%25%3B%0A%20%20%20%20%20%20%20%20background-image%3A%20url('https%3A%2F%2F64.media.tumblr.com%2Faa398772b1e0b6ec73a946f0345c447a%2Ffcf1d4a8156bfe76-f5%2Fs400x600%2F62ee3a5c6671de6326e1d320912fd5e2aaad57cb.gif')%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%3C%2Fstyle%3E%0A%20%20%3C%2Fbody%3E%0A%3C%2Fhtml%3E%0A;
+    </div>
+    <br>
+    <button onclick="copyToClipboard()">Copy to Clipboard</button>
+    <p>2. Paste it into your search bar and press ENTER.</p>
+    <p><strong>Boom!</strong> Teaching Worksheets (and any other sites) won’t show up in your history!</p>
+    
+    <script>
+        function copyToClipboard() {
+            const text = document.getElementById("copyText").innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Copied to clipboard! press ctrl + v to paste");
+            });
+        }
+    </script>
+</body>
+</html>
