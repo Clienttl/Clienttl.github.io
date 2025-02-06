@@ -23,6 +23,7 @@
             height: 100vh;
             text-align: center;
             overflow: hidden;
+            position: relative;
         }
 
         h1 {
@@ -34,7 +35,7 @@
         .button-container {
             display: flex;
             flex-direction: column;
-            gap: 15px; /* Adds spacing between buttons */
+            gap: 15px;
             align-items: center;
             margin-top: 20px;
         }
@@ -43,7 +44,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px; /* Proper spacing between icon and text */
+            gap: 15px;
             padding: 15px 50px;
             background: linear-gradient(90deg, #333, #111);
             border: none;
@@ -56,8 +57,6 @@
             text-transform: uppercase;
             font-weight: bold;
             letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
             width: 250px;
         }
 
@@ -67,43 +66,41 @@
             background: linear-gradient(90deg, #222, #000);
         }
 
-        .loading-screen {
+        .corner-btn {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(180deg, #444, #000);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            animation: fadeIn 1s ease-in-out;
-        }
-
-        .loading-logo {
-            width: 80px;
-            height: 80px;
-            border: 6px solid white;
-            border-top: 6px solid transparent;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: url('/sebas.png') no-repeat center/cover;
+            border: none;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            transition: transform 0.2s;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .corner-btn:hover {
+            transform: scale(1.1);
         }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .gif-container img {
+            position: absolute;
+            width: 80px;
+            height: auto;
+            opacity: 1;
+            animation: fadeOut 1.5s ease-in-out forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-100px); }
         }
     </style>
 </head>
 <body>
 
-    <h1>rip link generator 2/3/25-2/3/25 </h1>
+    <h1>rip link generator 2/3/25-2/3/25</h1>
     
     <div class="button-container">
         <button class="btn" onclick="startLoading('55gms.html')">
@@ -117,22 +114,32 @@
         </button>
     </div>
 
+    <button class="corner-btn" onclick="showGifs()"></button>
 
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-logo"></div>
-    </div>
+    <div class="gif-container"></div>
 
     <script>
         function startLoading(url) {
             document.querySelector("h1").style.display = "none";
             document.querySelector(".button-container").style.display = "none";
-            document.getElementById('loadingScreen').style.display = 'flex';
-
             setTimeout(() => {
                 window.location.href = url; 
             }, 1000);
         }
-    </script>
 
+        function showGifs() {
+            const container = document.querySelector('.gif-container');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 5; i++) {
+                let img = document.createElement('img');
+                img.src = '/n.png';
+                img.style.left = `${Math.random() * (window.innerWidth - 100)}px`;
+                img.style.top = `${Math.random() * (window.innerHeight - 100)}px`;
+                container.appendChild(img);
+                setTimeout(() => img.remove(), 1500);
+            }
+        }
+    </script>
 </body>
 </html>
