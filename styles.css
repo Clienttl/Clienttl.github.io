@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Page</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        #openButton {
+            background-color: #ffffcc;
+            color: black;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 15px;
+        }
+
+        #browseLabel {
+            display: inline-block;
+            background-color: #e6e6ff;
+            color: #333;
+            font-size: 18px;
+            border: 2px dashed #aaa;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 420px;
+            box-sizing: border-box;
+        }
+
+        #fileError, #urlError {
+            color: red;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        #urlInput {
+            display: inline-block;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 12px 20px;
+            width: 420px;
+            height: 45px;
+            box-sizing: border-box;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .clearButton {
+            background-color: #ffcccb;
+            color: black;
+            font-size: 14px;
+            border: 1px solid #ff9999;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .inputContainer {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <button id="openButton">Open in New Window</button>
+
+    <div class="inputContainer">
+        <label id="browseLabel" for="fileInput">
+            Drag and drop or click to upload an HTML file
+        </label>
+        <input type="file" id="fileInput" accept=".html">
+        <button class="clearButton" id="clearFile">Clear File</button>
+    </div>
+    <div id="fileError"></div>
+
+    <div class="inputContainer">
+        <input type="text" id="urlInput" placeholder="Enter URL">
+        <button class="clearButton" id="clearUrl">Clear URL</button>
+    </div>
+    <div id="urlError"></div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const browseLabel = document.getElementById('browseLabel');
+        const clearFileButton = document.getElementById('clearFile');
+        const urlInput = document.getElementById('urlInput');
+        const clearUrlButton = document.getElementById('clearUrl');
+        const openButton = document.getElementById('openButton');
+        const fileError = document.getElementById('fileError');
+        const urlError = document.getElementById('urlError');
+
+        let fileContent = '';
+
+        fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0];
+            if (file) {
+                fileContent = await file.text();
+                browseLabel.textContent = file.name;
+            }
+        });
+
+        clearFileButton.addEventListener('click', () => {
+            fileInput.value = '';
+            fileContent = '';
+            browseLabel.textContent = 'Drag and drop or click to upload an HTML file';
+        });
+
+        clearUrlButton.addEventListener('click', () => {
+            urlInput.value = '';
+        });
+
+        openButton.addEventListener('click', openInNewWindow);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                openInNewWindow();
+            }
+        });
+
+        function openInNewWindow() {
+            fileError.style.display = 'none';
+            urlError.style.display = 'none';
+
+            if (fileContent) {
+                const newTab = window.open('about:blank', '_blank');
+                newTab.document.write(fileContent);
+                newTab.document.close();
+                clearInputs();
+            } else if (urlInput.value.trim()) {
+                let url = urlInput.value.trim();
+                if (!/^https?:\/\//.test(url)) {
+                    url = 'https://' + url;
+                }
+
+                if (!/\./.test(url)) {
+                    urlError.textContent = 'Invalid URL.';
+                    urlError.style.display = 'block';
+                    return;
+                }
+
+                const newTab = window.open('about:blank', '_blank');
+                newTab.document.write(`
+                    <html>
+                    <head>
+                        <style>
+                            body, iframe {
+                                margin: 0;
+                                padding: 0;
+                                width: 100%;
+                                height: 100%;
+                                border: none;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe src="${url}" frameborder="0" allowfullscreen></iframe>
+                    </body>
+                    </html>
+                `);
+                newTab.document.close();
+                clearInputs();
+            } else {
+                fileError.textContent = 'No file or URL provided.';
+                fileError.style.display = 'block';
+            }
+        }
+
+        function clearInputs() {
+            fileInput.value = '';
+            fileContent = '';
+            browseLabel.textContent = 'Drag and drop or click to upload an HTML file';
+            urlInput.value = '';
+        }
+    </script>
+</body>
+</html>
