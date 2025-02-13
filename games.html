@@ -3,146 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>about:blank</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" crossorigin="anonymous"></script>
+    <title>about:error</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Orbitron&display=swap" rel="stylesheet"> <!-- Added Orbitron font -->
     <style>
+        /* Basic Reset */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
         }
 
+        /* Page Background */
         body {
-            background: linear-gradient(180deg, #444, #000);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6)), url('your-image-url.jpg'); /* Gradient with image */
+            background-size: cover;
+            background-position: center;
             color: white;
+            font-family: 'Poppins', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            animation: fadeIn 2s ease-in-out; /* Fade-in animation for page load */
+        }
+
+        /* Page Content Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Transparent HUD Navigation Bar */
+        .hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0); /* Fully transparent background */
+            color: white;
+            padding: 15px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: slideInNav 1s ease-in-out; /* Slide-in animation */
+        }
+
+        @keyframes slideInNav {
+            from {
+                transform: translateY(-100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        /* Navigation Container */
+        .hud .nav-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Navigation Links Styling */
+        .hud ul {
+            list-style-type: none;
+            display: flex;
+            gap: 30px;
+        }
+
+        .hud ul li {
+            display: inline;
+        }
+
+        .hud ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            text-transform: uppercase;
+            padding: 8px 16px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .hud ul li a:hover {
+            background-color: #444;
+            border-radius: 5px;
+            transform: scale(1.1); /* Hover animation */
+        }
+
+        /* Add padding for content so it doesn't hide behind the nav bar */
+        .content {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-top: 70px; /* Space for the navigation bar */
+            animation: fadeIn 2s ease-in-out; /* Fade-in animation for content */
+        }
+
+        /* Home Page Content */
+        .page {
+            padding: 50px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            text-align: center;
-            overflow: hidden;
-            position: relative;
+            animation: zoomIn 1s ease-in-out; /* Zoom-in effect */
         }
 
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 30px;
-            animation: fadeIn 1.5s ease-in-out;
+        /* Page Zoom Animation */
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
+        /* Main Title Styling */
+        .main-title {
+            font-size: 3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            font-family: 'Orbitron', sans-serif; /* Using Orbitron for the title */
+            text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.3); /* Added text shadow */
+        }
+
+        /* Styling for Buttons */
         .button-container {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
+            gap: 20px;
             margin-top: 20px;
         }
 
-        .btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            padding: 15px 50px;
-            background: linear-gradient(90deg, #333, #111);
+        .button-container button {
+            background: linear-gradient(to right, #333, #666);
             border: none;
             color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease-in-out;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.2em;
+            padding: 15px 35px;
             border-radius: 50px;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-            text-transform: uppercase;
-            font-weight: bold;
-            letter-spacing: 1px;
-            width: 250px;
-        }
-
-        .btn:hover {
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
-            background: linear-gradient(90deg, #222, #000);
-        }
-
-        .corner-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background: url('/sebas.png') no-repeat center/cover;
-            border: none;
-            border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-            transition: transform 0.2s;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); /* Added button shadow */
         }
 
-        .corner-btn:hover {
+        .button-container button:hover {
+            background-color: #444;
             transform: scale(1.1);
+            box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.5);
+            animation: pulse 1s ease-in-out infinite; /* Added pulse animation */
         }
 
-        .gif-container img {
-            position: absolute;
-            width: 80px;
-            height: auto;
-            opacity: 1;
-            animation: fadeOut 1.5s ease-in-out forwards;
+        /* Button Pulse Animation */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
 
-        @keyframes fadeOut {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-100px); }
+        /* Glow Effect for Buttons */
+        .button-container button:active {
+            box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0.8);
         }
+
     </style>
 </head>
 <body>
 
-    <h1>rip link generator 2/3/25-2/3/25</h1>
-    
-    <div class="button-container">
-        <button class="btn" onclick="startLoading('55gms.html')">
-            <i class="fas fa-fire"></i> 55gms
-        </button>
-        <button class="btn" onclick="startLoading('pizza.html')">
-            <i class="fas fa-bolt"></i> pizza
-        </button>
-        <button class="btn" onclick="startLoading('fa.html')">
-            <i class="fas fa-frog"></i> arcade
-        </button>
-        <button class="btn" onclick="startLoading('archived.html')">
-            <i class="fas fa-lock"></i> archived
-        </button>
+    <!-- HUD Navigation Bar -->
+    <div class="hud">
+        <div class="nav-container">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="games.html">Games</a></li>
+            </ul>
+        </div>
     </div>
 
-    <button class="corner-btn" onclick="showGifs()"></button>
+    <!-- Main Content Section -->
+    <div class="content">
+        <!-- Home Page Section -->
+        <div id="home" class="page">
+            <h1 class="main-title">teachingworksheets.org v2</h1>
+            <!-- Replaced main description with buttons -->
+            <div class="button-container">
+                <button onclick="window.location.href='gms.html'">Red's Exploit Corner</button>
+                <button onclick="window.location.href='pizza.html'">Pizza Edition</button>
+            </div>
+        </div>
+    </div>
 
-    <div class="gif-container"></div>
-
-    <script>
-        function startLoading(url) {
-            document.querySelector("h1").style.display = "none";
-            document.querySelector(".button-container").style.display = "none";
-            setTimeout(() => {
-                window.location.href = url; 
-            }, 1000);
-        }
-
-        function showGifs() {
-            const container = document.querySelector('.gif-container');
-            container.innerHTML = '';
-            
-            for (let i = 0; i < 500; i++) {
-                let img = document.createElement('img');
-                img.src = '/n.png';
-                img.style.left = `${Math.random() * (window.innerWidth - 100)}px`;
-                img.style.top = `${Math.random() * (window.innerHeight - 100)}px`;
-                container.appendChild(img);
-                setTimeout(() => img.remove(), 15000);
-            }
-        }
-    </script>
 </body>
 </html>
