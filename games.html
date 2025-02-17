@@ -261,7 +261,7 @@
 
     <!-- Terminal Popup -->
     <div class="terminal-popup" id="terminalPopup">
-        <div id="terminalOutput">C:/Chromebook> </div>
+        <div id="terminalOutput">C:/Chromebook></div>
         <input type="text" id="terminalInput" onkeydown="handleCommand(event)">
     </div>
 
@@ -278,19 +278,22 @@
             }
         }
 
-        function handleCommand(event) {
-            const terminalInput = document.getElementById('terminalInput');
-            const terminalOutput = document.getElementById('terminalOutput');
+function handleCommand(event) {
+    const terminalInput = document.getElementById('terminalInput');
+    const terminalOutput = document.getElementById('terminalOutput');
 
-            if (event.key === 'Enter') {
-                let inputValue = terminalInput.value.trim();
-                if (inputValue === "lowtaperfade") {
-                    terminalOutput.innerHTML += "<br>its massive";
-                }
-                terminalInput.value = ""; // Clear the input field
-                terminalOutput.innerHTML += "<br>C:/Chromebook> "; // Keep showing the prompt
-            }
+    if (event.key === 'Enter') {
+        let inputValue = terminalInput.value.trim();
+        if (inputValue === "lowtaperfade") {
+            terminalOutput.innerHTML += "<br>its massive sebas, really massive.";
+        } else if (inputValue === "froggies_developer") {
+            window.open('linkgen-froggies.html', '_blank');
+            terminalOutput.innerHTML += "success!";
         }
+        terminalInput.value = ""; // Clear the input field
+        terminalOutput.innerHTML += "<br>C:/Chromebook> "; // Keep showing the prompt
+    }
+}
     </script>
 
 </body>
