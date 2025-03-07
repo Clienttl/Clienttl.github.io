@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>about:blank</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background: black; }
+        #loading { color: white; font-size: 24px; }
+        #image-container, #iframe-container { display: none; text-align: center; }
+        #image-container img { max-width: 80vw; max-height: 80vh; }
+        iframe { width: 100vw; height: 100vh; border: none; }
+    </style>
+</head>
+<body>
+    <div id="loading">Loading...</div>
+    <div id="image-container">
+        <img src="image.png" alt="Loaded Image">
+    </div>
+    <div id="iframe-container">
+        <iframe src="https://www.nitrotype.com" loading="lazy"></iframe>
+    </div>
+    
+    <script>
+        setTimeout(() => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('image-container').style.display = 'block';
+            
+            setTimeout(() => {
+                document.getElementById('image-container').style.display = 'none';
+                document.getElementById('iframe-container').style.display = 'block';
+            }, 50);
+        }, 3000);
+    </script>
+</body>
+</html>
