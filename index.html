@@ -51,7 +51,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>site will die in like 10 days soooo</h1>
+    <h1 id="link-count">current links: loading...</h1>
     <button class="xeno-button" onclick="xenovoidAccess('sigmaboy.txt')">game site</button>
   </div>
 
@@ -61,6 +61,8 @@
         const response = await fetch(gatePath);
         const gateData = await response.text();
         const portalLinks = gateData.split('\n').filter(link => link.trim() !== '');
+        document.getElementById('link-count').textContent = 'current links: ' + portalLinks.length;
+        
         if (portalLinks.length === 0) {
           alert('No gateways detected in ' + gatePath);
           return;
@@ -72,6 +74,20 @@
         alert('PAWN ' + gatePath);
       }
     }
+
+    async function updateLinkCount() {
+      try {
+        const response = await fetch('sigmaboy.txt');
+        const gateData = await response.text();
+        const portalLinks = gateData.split('\n').filter(link => link.trim() !== '');
+        document.getElementById('link-count').textContent = 'current links: ' + portalLinks.length;
+      } catch (error) {
+        console.error('Failed to fetch link count:', error);
+        document.getElementById('link-count').textContent = 'current links: error';
+      }
+    }
+
+    updateLinkCount();
   </script>
 </body>
 </html>
