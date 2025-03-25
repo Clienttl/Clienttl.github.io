@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ExtFlood3r</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #555;
+            font-size: 18px;
+        }
+
+        select {
+            font-size: 16px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        button {
+            font-size: 16px;
+            padding: 12px 20px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        iframe {
+            display: none;
+        }
+
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script>
+        function hanger() {
+            let extURL = document.getElementById("extensionSelect").value;
+            let extWin = window.open(extURL);
+
+            setTimeout(function() {
+                let killURL = "https://" + "e".repeat(2000000); // generates a really long URL that hangs the extension page
+                extWin.location.href = killURL;
+                let iframe = document.createElement("iframe"); // iframe so that the extension wont restore itself when the switch is flipped
+                iframe.src = extURL;
+            	iframe.style.width = "10px";
+            	iframe.style.height = "10px";
+            	iframe.style.border = "none";
+            	document.body.appendChild(iframe);
+                setTimeout(function() {
+		    extWin.close()
+            	}, 1000);
+            }, 100);
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>ExtFlood3r</h2>
+    This is probably the stupidest yet most reliable extension hanger method. This literally just opens an extension page and redirects to a long ass url why does this actually work
+    <br><br>
+    It lasts longer than exthang3r (and maybe extprint3r) while taking under 2 seconds to hang the extension 😭
+    <br><br>
+        <select id="extensionSelect">
+            <option value="chrome-extension://lcgajdcbmhepemmlpemkkpgagieehmjp/fonts/Metropolis.css">Securly (4th ID)</option>
+            <option value="chrome-extension://ckecmkbnoanpgplccmnoikfmpcdladkc/fonts/Metropolis.css">Securly (3rd ID)</option>
+            <option value="chrome-extension://joflmkccibkooplaeoinecjbmdebglab/fonts/Metropolis.css">Securly (2nd ID)</option>
+            <option value="chrome-extension://iheobagjkfklnlikgihanlhcddjoihkg/fonts/Metropolis.css">Securly (1st ID)</option>
+            <option value="chrome-extension://haldlgldplgnggkjaafhelgiaglafanh/youtube_injection.js">GoGuardian</option>
+            <option value="chrome-extension://baleiojnjpgeojohhhfbichcodgljmnj/blocked.html">LANSchool</option>
+            <option value="chrome-extension://ddfbkhpmcdbciejenfcolaaiebnjcbfc/background/assets/pages/default-blocked.html">Linewize</option>
+            <option value="chrome-extension://ghlpmldmjjhmdgmneoaibbegkjjbonbk/pages/blockPage.html">Blocksi</option>
+            <option value="chrome-extension://igbgpehnbmhgdgjbhkkpedommgmfbeao/youtube_injection.js">FortiGuard</option>
+            <option value="chrome-extension://jcdhmojfecjfmbdpchihbeilohgnbdci/blocked.html">Cisco Umbrella</option>
+            <option value="chrome-extension://jdogphakondfdmcanpapfahkdomaicfa/img/ckauth19x.png">ContentKeeper</option>
+            <option value="chrome-extension://odoanpnonilogofggaohhkdkdgbhdljp/img/ckauth19x.png">CK-Authenticator G3</option>
+            <option value="chrome-extension://hkobaiihndnbfhbkmjjfbdimfbdcppdh/notfound.html">Securly Classroom (2nd ID)</option>
+            <option value="chrome-extension://jfbecfmiegcjddenjhlbhlikcbfmnafd/notfound.html">Securly Classroom (1st ID)</option>
+            <option value="chrome-extension://kbohafcopfpigkjdimdcdgenlhkmhbnc/blocked.html">Hapara (2nd ID)</option>
+            <option value="chrome-extension://aceopacgaepdcelohobicpffbbejnfac/blocked.html">Hapara (1st ID)</option>
+            <option value="chrome-extension://kmffehbidlalibfeklaefnckpidbodff/restricted.html">iboss</option>
+            <option value="chrome-extension://njdniclgegijdcdliklgieicanpmcngj/js/speed_test.js">Lightspeed Digital Insight Agent</option>
+            <option value="chrome-extension://adkcpkpghahmbopkjchobieckeoaoeem/icon-128.png">Lightspeed Filter Agent</option>
+            <option value="chrome-extension://kkbmdgjggcdajckdlbngdjonpchpaiea/assets/icon-classroom-128.png">Lightspeed Classroom</option>
+            <option value="chrome-extension://jbddgjglgkkneonnineaohdhabjbgopi/pages/message-page.html">InterCLASS Filtering Service</option>
+            <option value="chrome-extension://ecjoghccnjlodjlmkgmnbnkdcbnjgden/resources/options.js">InterSafe GatewayConnection Agent</option>
+            <option value="chrome-extension://pabjlbjcgldndnpjnokjakbdofjgnfia/image/allow_icon/shield_green_128x128.png">LoiLo Web Filters</option>
+            <option value="chrome-extension://cgbbbjmgdpnifijconhamggjehlamcif/images/gopher-buddy_128x128_color.png">Gopher Buddy</option>
+            <option value="chrome-extension://honjcnefekfnompampcpmcdadibmjhlk/blocked.html">LanSchool Web Helper</option>
+            <option value="chrome-extension://cgigopjakkeclhggchgnhmpmhghcbnaf/models/model.json">IMTLazarus</option>
+            <option value="chrome-extension://jjpmjccpemllnmgiaojaocgnakpmfgjg/licenses.html">Impero Backdrop</option>
+            <option value="chrome-extension://fgmafhdohjkdhfaacgbgclmfgkgokgmb/block.html">Mobile Guardian</option>
+            <option value="chrome-extension://gcjpefhffmcgplgklffgbebganmhffje/_locales/lt/messages.json">NetSupport School Student</option>
+            <option value="chrome-extension://mpkdoimpgkhjcicmhmlmgboelebflpla/_locales/lt/messages.json">classroom.cloud Student</option>
+            <option value="chrome-extension://fogjeanjfbiombghnmkmmophfeccjdki/manifest.json">Lockdown Browser</option>
+            <option value="chrome-extension://ifinpabiejbjobcphhaomiifjibpkjlf/chat/assets/imgs/pendo.png">Linewize Filter</option>
+            <option value="chrome-extension://apchgbgnimojffnkddiigiekiooeieno/pages/blockPage.html">Borderless Classroom Student (2nd ID)</option>
+            <option value="chrome-extension://kdpgkligilplaanoablcpjahjjeghcl/pages/blockPage.html">Borderless Classroom Student (1st ID)</option>
+            <option value="chrome-extension://djpknfecbncogekjnjppojlaipeobkmo/assets/images/icon_128.png">LockDown Browser AP Classroom Edition</option>
+            <option value="chrome-extension://eoobggamkobbcpiojefejfglbfcacgca/assets/images/icon_128.png">Lugus School</option>
+        </select>
+
+        <button onclick="hanger()">Hang extension</button>
+
+        <p>once u hang it flip the allow access to file urls to kill it and then u can close this tab. just like all the other hangers this only works with one extension at a time</p>
+    </div>
+</body>
+</html>
