@@ -3,43 +3,75 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Service Suspended</title>
-  <link href="https://fonts.googleapis.com/css?family=Tangerine" rel="stylesheet">
+  <title>CANVAS_ERROR</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     body {
-      background-color: black;
-      color: white;
-      font-family: 'Tangerine', Arial, sans-serif;
+      background-color: #000;
+      color: #fff;
+      font-family: 'Rubik', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-image: url('anime-background.png');
+      background-size: cover;
+      background-blend-mode: multiply;
+    }
+    .container {
       text-align: center;
-      margin-top: 15%;
     }
     h1 {
-      font-size: 3em;
-      color: #ff4d4d;
+      font-size: 3rem;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+      margin-bottom: 30px;
     }
-    p {
-      font-size: 1.2em;
+    .xeno-button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      color: white;
+      padding: 18px 50px;
+      margin: 10px;
+      font-size: 1.2rem;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s, background 0.3s;
+      display: inline-block;
     }
-    .error-code {
-      color: #ff4d4d;
-      font-size: 1.5em;
-      margin-top: 20px;
+    .xeno-button:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255, 255, 255, 1);
+      background: rgba(255, 255, 255, 0.2);
     }
-    a {
-      color: #4da6ff;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    a:hover {
-      text-decoration: underline;
+    .xeno-button:active {
+      transform: translateY(2px);
     }
   </style>
 </head>
 <body>
-  <h1>Service Suspended</h1>
-  <p>Error Code: <span class="error-code">503</span> - Service Unavailable</p>
-  <p>I will no longer be paying for this site to be up, it'll probably go down in 5-10 days.</p>
-  <p>Here's a free link: <a href="https://ddwddwwdwdwwdwdw.pizza.sunsetworksheets.store" target="_blank">Pizza Edition</a></p>
-  <p>Thank you for your support.</p>
+  <div class="container">
+    <h1>site will die in like 10 days soooo</h1>
+    <button class="xeno-button" onclick="xenovoidAccess('sigmaboy.txt')">game site</button>
+  </div>
+
+  <script>
+    async function xenovoidAccess(gatePath) {
+      try {
+        const response = await fetch(gatePath);
+        const gateData = await response.text();
+        const portalLinks = gateData.split('\n').filter(link => link.trim() !== '');
+        if (portalLinks.length === 0) {
+          alert('No gateways detected in ' + gatePath);
+          return;
+        }
+        const selectedPortal = portalLinks[Math.floor(Math.random() * portalLinks.length)];
+        window.open(selectedPortal, '_blank');
+      } catch (error) {
+        console.error('Xenovoid failure at ' + gatePath + ':', error);
+        alert('PAWN ' + gatePath);
+      }
+    }
+  </script>
 </body>
 </html>
