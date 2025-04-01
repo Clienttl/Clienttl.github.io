@@ -1,0 +1,1 @@
+.text-container{overflow:hidden;pointer-events:none;position:relative}.text-container>*{pointer-events:auto}.text-container:after{bottom:0;box-shadow:inset 0 -50px 50px #000410;content:"";left:-15px;position:absolute;right:-15px;top:0}.articles>p{margin-top:.75rem!important}
