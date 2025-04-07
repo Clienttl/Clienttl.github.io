@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!-- saved from url=(0153)https://tpc.googlesyndication.com/sadbundle/$csp%3Der3$/11514245535015605540/index.html#t=2633059779718143385&p=https%3A%2F%2Fgoogleads.g.doubleclick.net -->
+<html><script src="chrome-extension://eppiocemhmnlbhjplcgkofciiegomcon/libs/extend-native-history-api.js"></script><script src="chrome-extension://eppiocemhmnlbhjplcgkofciiegomcon/libs/requests.js"></script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script src="./f.txt" type="text/javascript"></script><script src="./f(1).txt" type="text/javascript"></script><meta content="width=468,height=60" name="ad.size"><meta content="Adobe_Animate_CC" name="authoring-tool"><title>index</title><script src="./createjs_2019.11.15_min.js.download"></script><script src="./index.js.download"></script><script type="text/javascript">
+var timelimit = true;
+</script><script>
+var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+function init() {
+	canvas = document.getElementById("canvas");
+	anim_container = document.getElementById("animation_container");
+	dom_overlay_container = document.getElementById("dom_overlay_container");
+	var comp=AdobeAn.getComposition("68FB3C922285C34EB596F6AA471A5031");
+	var lib=comp.getLibrary();
+	var loader = new createjs.LoadQueue(false);
+	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
+	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
+	var lib=comp.getLibrary();
+	loader.loadManifest(lib.properties.manifest);
+}
+function handleFileLoad(evt, comp) {
+	var images=comp.getImages();	
+	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }	
+}
+function handleComplete(evt,comp) {
+	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	var queue = evt.target;
+	var ssMetadata = lib.ssMetadata;
+	for(i=0; i<ssMetadata.length; i++) {
+		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
+	}
+	exportRoot = new lib.index();
+	stage = new lib.Stage(canvas);	
+	//Registers the "tick" event listener.
+	fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+	}	    
+	//Code to support hidpi screens and responsive scaling.
+	AdobeAn.makeResponsive(false,'both',false,1,[canvas,anim_container,dom_overlay_container]);	
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+}
+</script><script type="text/javascript" src="./CAJBfmNRCu-Qi2IyCSWL4SdWFMTyf9AvY8I59PsAO3Y.js.download"></script><script bis_use="true" type="text/javascript" charset="utf-8" data-bis-config="[&quot;facebook.com/&quot;,&quot;twitter.com/&quot;,&quot;youtube-nocookie.com/embed/&quot;,&quot;//vk.com/&quot;,&quot;//www.vk.com/&quot;,&quot;linkedin.com/&quot;,&quot;//www.linkedin.com/&quot;,&quot;//instagram.com/&quot;,&quot;//www.instagram.com/&quot;,&quot;//www.google.com/recaptcha/api2/&quot;,&quot;//hangouts.google.com/webchat/&quot;,&quot;//www.google.com/calendar/&quot;,&quot;//www.google.com/maps/embed&quot;,&quot;spotify.com/&quot;,&quot;soundcloud.com/&quot;,&quot;//player.vimeo.com/&quot;,&quot;//disqus.com/&quot;,&quot;//tgwidget.com/&quot;,&quot;//js.driftt.com/&quot;,&quot;friends2follow.com&quot;,&quot;/widget&quot;,&quot;login&quot;,&quot;//video.bigmir.net/&quot;,&quot;blogger.com&quot;,&quot;//smartlock.google.com/&quot;,&quot;//keep.google.com/&quot;,&quot;/web.tolstoycomments.com/&quot;,&quot;moz-extension://&quot;,&quot;chrome-extension://&quot;,&quot;/auth/&quot;,&quot;//analytics.google.com/&quot;,&quot;adclarity.com&quot;,&quot;paddle.com/checkout&quot;,&quot;hcaptcha.com&quot;,&quot;recaptcha.net&quot;,&quot;2captcha.com&quot;,&quot;accounts.google.com&quot;,&quot;www.google.com/shopping/customerreviews&quot;,&quot;buy.tinypass.com&quot;,&quot;gstatic.com&quot;,&quot;secureir.ebaystatic.com&quot;,&quot;docs.google.com&quot;,&quot;contacts.google.com&quot;,&quot;github.com&quot;,&quot;mail.google.com&quot;,&quot;chat.google.com&quot;,&quot;audio.xpleer.com&quot;,&quot;keepa.com&quot;,&quot;static.xx.fbcdn.net&quot;,&quot;sas.selleramp.com&quot;,&quot;1plus1.video&quot;,&quot;console.googletagservices.com&quot;,&quot;//lnkd.demdex.net/&quot;,&quot;//radar.cedexis.com/&quot;,&quot;//li.protechts.net/&quot;,&quot;challenges.cloudflare.com/&quot;,&quot;ogs.google.com&quot;]" src="chrome-extension://eppiocemhmnlbhjplcgkofciiegomcon/executors/traffic.js"></script></head><body onclick="ExitApi.exit();" onload="init();" style="margin:0px;; cursor:pointer" __processed_66cde64a-ee6b-4644-8044-83b70aba7bd6__="true" bis_status="ok" bis_frame_id="1279" bis_body_id="fr_atl33o7ou7ityum8yjqj2g" bis_depth="2" bis_chainid="7" bis_size="{&quot;x&quot;:0,&quot;y&quot;:0,&quot;w&quot;:468,&quot;h&quot;:60,&quot;abs_x&quot;:953,&quot;abs_y&quot;:1297}">
+
+
+
+
+
+
+
+
+
+
+
+
+
+	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:468px; height:60px" bis_size="{&quot;x&quot;:0,&quot;y&quot;:0,&quot;w&quot;:468,&quot;h&quot;:60,&quot;abs_x&quot;:953,&quot;abs_y&quot;:1297}">
+		<canvas height="60" id="canvas" style="position: absolute; display: block; background-color: rgb(255, 255, 255); width: 468px; height: 60px;" width="468" bis_size="{&quot;x&quot;:0,&quot;y&quot;:0,&quot;w&quot;:468,&quot;h&quot;:60,&quot;abs_x&quot;:953,&quot;abs_y&quot;:1297}"></canvas>
+		<div id="dom_overlay_container" style="pointer-events: none; overflow: hidden; width: 468px; height: 60px; position: absolute; left: 0px; top: 0px; display: block; border: 1px solid rgb(51, 51, 51); box-sizing: border-box;" bis_size="{&quot;x&quot;:0,&quot;y&quot;:0,&quot;w&quot;:468,&quot;h&quot;:60,&quot;abs_x&quot;:953,&quot;abs_y&quot;:1297}">
+		</div>
+	</div>
+
+<div id="preloadjs-container" style="visibility: hidden; position: absolute; height: 10px; width: 10px; overflow: hidden; transform: translate(-10px, -10px);" bis_size="{&quot;x&quot;:-10,&quot;y&quot;:50,&quot;w&quot;:10,&quot;h&quot;:10,&quot;abs_x&quot;:943,&quot;abs_y&quot;:1347}"></div></body></html>
