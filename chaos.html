@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>true</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; overflow: hidden; background: #111; font-family: sans-serif; color: white; }
+    canvas { display: block; margin: auto; background: #222; }
+    #menu, #gameOver {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.85); z-index: 10;
+    }
+    #title {
+      font-size: 64px; font-weight: bold; margin-bottom: 30px;
+      animation: glow 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+      from { text-shadow: 0 0 10px white; }
+      to { text-shadow: 0 0 20px red; }
+    }
+    #startBtn, #restartBtn {
+      padding: 15px 30px; font-size: 24px; cursor: pointer;
+      background: #444; border: 2px solid white; border-radius: 10px;
+      transition: background 0.3s;
+    }
+    #startBtn:hover, #restartBtn:hover { background: #666; }
+    .sword {
+      width: 50px; height: 150px; background: linear-gradient(#ccc, #999);
+      position: absolute; top: -100px;
+      animation: swing 2s infinite alternate ease-in-out;
+      border-radius: 10px;
+    }
+    .sword::after {
+      content: ''; width: 10px; height: 20px; background: #333;
+      position: absolute; bottom: -20px; left: 20px;
+    }
+    @keyframes swing {
+      from { transform: rotate(-30deg) translateY(0); }
+      to { transform: rotate(30deg) translateY(20px); }
+    }
+    #cooldownBar {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 20px;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid white;
+    }
+    #cooldownFill {
+      height: 100%;
+      background: white;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+<div id="menu">
+  <div class="sword" style="left: 30%;"></div>
+  <div class="sword" style="left: 70%; animation-delay: 1s;"></div>
+  <div id="title">dodge</div>
+  <button id="startBtn">play</button>
+</div>
+<div id="gameOver" style="display:none;">
+  <h1>Game Over</h1>
+  <button id="restartBtn">Restart</button>
+</div>
+<div id="cooldownBar" style="display:none;"><div id="cooldownFill"></div></div>
+<canvas id="gameCanvas"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const menu = document.getElementById('menu');
+const gameOverScreen = document.getElementById('gameOver');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const cooldownBar = document.getElementById('cooldownBar');
+const cooldownFill = document.getElementById('cooldownFill');
+
+startBtn.onclick = () => { menu.style.display = 'none'; cooldownBar.style.display = 'block'; gameRunning = true; gameLoop(); };
+restartBtn.onclick = () => { location.reload(); };
+
+let gameRunning = false;
+
+const player = { x: canvas.width / 2, y: canvas.height / 2, size: 20, speed: 3, alive: true };
+const target = { x: player.x, y: player.y };
+const keys = {};
+document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+function updateKeyboardMovement() {
+  if (!player.alive) return;
+  if (keys['w']) player.y -= player.speed;
+  if (keys['a']) player.x -= player.speed;
+  if (keys['s']) player.y += player.speed;
+  if (keys['d']) player.x += player.speed;
+  player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
+  player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+}
+
+canvas.addEventListener('mousedown', e => { if (e.button === 0) isMouseDown = true; });
+canvas.addEventListener('mouseup', e => { if (e.button === 0) isMouseDown = false; });
+canvas.addEventListener('mousemove', e => {
+  if (isMouseDown) {
+    const rect = canvas.getBoundingClientRect();
+    target.x = e.clientX - rect.left;
+    target.y = e.clientY - rect.top;
+  }
+});
+
+const balls = [], lavaBlocks = [], blades = [], electricZones = [];
+const maxBalls = 50;
+
+function addBall() {
+  if (balls.length < maxBalls) {
+    balls.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: 20 + Math.random() * 30,
+      dx: (Math.random() - 0.5) * 4,
+      dy: (Math.random() - 0.5) * 4
+    });
+  }
+}
+function updateBalls() {
+  for (const ball of balls) {
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+    if (ball.x <= 0 || ball.x + ball.size >= canvas.width) ball.dx *= -1;
+    if (ball.y <= 0 || ball.y + ball.size >= canvas.height) ball.dy *= -1;
+  }
+}
+function addLavaBlock() {
+  const width = 30 + Math.random() * 70;
+  lavaBlocks.push({ x: Math.random() * (canvas.width - width), y: -100, width, height: 30, speed: 2 + Math.random() * 3 });
+}
+function updateLavaBlocks() {
+  for (const lava of lavaBlocks) lava.y += lava.speed;
+}
+function addBlade() {
+  blades.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, angle: 0, radius: 40, speed: 0.05 });
+}
+function updateBlades() {
+  for (const blade of blades) blade.angle += blade.speed;
+}
+function addElectricZone() {
+  electricZones.push({ x: Math.random() * (canvas.width - 150), y: Math.random() * (canvas.height - 150), width: 100, height: 100, active: false, timer: 0 });
+}
+function updateElectricZones() {
+  for (const zone of electricZones) {
+    zone.timer++;
+    if (zone.timer > 100) zone.active = !zone.active, zone.timer = 0;
+  }
+}
+let isMouseDown = false;
+let boomerang = null;
+let savedByBoomerang = false;
+const cooldownTime = 5000;
+let lastBoomerangTime = -cooldownTime;
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const now = Date.now();
+  if (!boomerang && player.alive && now - lastBoomerangTime >= cooldownTime) {
+    const rect = canvas.getBoundingClientRect();
+    const targetX = e.clientX - rect.left;
+    const targetY = e.clientY - rect.top;
+    const angle = Math.atan2(targetY - player.y, targetX - player.x);
+    boomerang = { x: player.x, y: player.y, radius: 8, speed: 1.5, angle, out: true };
+    lastBoomerangTime = now;
+  }
+});
+function updateBoomerang() {
+  if (!boomerang) return;
+  const dx = player.x - boomerang.x;
+  const dy = player.y - boomerang.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  if (boomerang.out) {
+    boomerang.x += Math.cos(boomerang.angle) * boomerang.speed;
+    boomerang.y += Math.sin(boomerang.angle) * boomerang.speed;
+    if (distance > 300) boomerang.out = false;
+  } else {
+    const angleBack = Math.atan2(player.y - boomerang.y, player.x - boomerang.x);
+    boomerang.x += Math.cos(angleBack) * boomerang.speed;
+    boomerang.y += Math.sin(angleBack) * boomerang.speed;
+    if (distance < player.size + boomerang.radius) {
+      if (!player.alive) player.alive = true;
+      boomerang = null;
+    }
+  }
+  const elapsed = Date.now() - lastBoomerangTime;
+  cooldownFill.style.width = `${Math.min(100, (elapsed / cooldownTime) * 100)}%`;
+}
+function updatePlayer() {
+  const dx = target.x - player.x;
+  const dy = target.y - player.y;
+  player.x += dx * 0.1;
+  player.y += dy * 0.1;
+}
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'black';
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'red';
+  for (const ball of balls) {
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = 'orange';
+  for (const lava of lavaBlocks) ctx.fillRect(lava.x, lava.y, lava.width, lava.height);
+  ctx.fillStyle = 'gray';
+  for (const blade of blades) {
+    ctx.save();
+    ctx.translate(blade.x, blade.y);
+    ctx.rotate(blade.angle);
+    ctx.fillRect(-blade.radius, -5, blade.radius * 2, 10);
+    ctx.restore();
+  }
+  for (const zone of electricZones) {
+    ctx.fillStyle = zone.active ? 'cyan' : 'rgba(0,255,255,0.2)';
+    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
+  }
+  if (boomerang) {
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(boomerang.x, boomerang.y, boomerang.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+function checkCollision() {
+  if (!player.alive) return;
+  for (const ball of balls) {
+    const dx = player.x - ball.x;
+    const dy = player.y - ball.y;
+    if (Math.sqrt(dx * dx + dy * dy) < player.size / 2 + ball.size / 2) return killPlayer();
+  }
+  for (const lava of lavaBlocks) {
+    if (player.x > lava.x && player.x < lava.x + lava.width && player.y > lava.y && player.y < lava.y + lava.height)
+      return killPlayer();
+  }
+  for (const blade of blades) {
+    const dx = player.x - blade.x, dy = player.y - blade.y;
+    if (Math.sqrt(dx * dx + dy * dy) < blade.radius) return killPlayer();
+  }
+  for (const zone of electricZones) {
+    if (zone.active && player.x > zone.x && player.x < zone.x + zone.width && player.y > zone.y && player.y < zone.y + zone.height)
+      return killPlayer();
+  }
+}
+function killPlayer() {
+  player.alive = false;
+  setTimeout(() => {
+    if (!player.alive) {
+      gameRunning = false;
+      gameOverScreen.style.display = 'flex';
+    }
+  }, 1000);
+}
+function gameLoop() {
+  if (!gameRunning) return;
+  updateKeyboardMovement();
+  updatePlayer();
+  updateBalls();
+  updateLavaBlocks();
+  updateBoomerang();
+  updateBlades();
+  updateElectricZones();
+  checkCollision();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+for (let i = 0; i < 5; i++) addBall();
+setInterval(addBall, 2000);
+setInterval(addLavaBlock, 3000);
+setInterval(addBlade, 5000);
+setInterval(addElectricZone, 7000);
+</script>
+</body>
+</html>
