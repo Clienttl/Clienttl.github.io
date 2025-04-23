@@ -1,288 +1,418 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>true</title>
+  <title>True Dodge Enhanced - Fixed v2</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; overflow: hidden; background: #111; font-family: sans-serif; color: white; }
-    canvas { display: block; margin: auto; background: #222; }
-    #menu, #gameOver {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: rgba(0, 0, 0, 0.85); z-index: 10;
+    body { margin: 0; overflow: hidden; background: #111; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
+    canvas { display: block; margin: auto; background: #222; cursor: crosshair; }
+    #uiOverlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 5;
+        display: none; /* Start hidden */
+        flex-direction: column; justify-content: space-between; align-items: center;
+        padding: 15px;
     }
-    #title {
-      font-size: 64px; font-weight: bold; margin-bottom: 30px;
-      animation: glow 1.5s ease-in-out infinite alternate;
+    #topUI {
+        width: 100%; display: flex; justify-content: space-between; align-items: center;
     }
-    @keyframes glow {
-      from { text-shadow: 0 0 10px white; }
-      to { text-shadow: 0 0 20px red; }
-    }
-    #startBtn, #restartBtn {
-      padding: 15px 30px; font-size: 24px; cursor: pointer;
-      background: #444; border: 2px solid white; border-radius: 10px;
-      transition: background 0.3s;
-    }
-    #startBtn:hover, #restartBtn:hover { background: #666; }
-    .sword {
-      width: 50px; height: 150px; background: linear-gradient(#ccc, #999);
-      position: absolute; top: -100px;
-      animation: swing 2s infinite alternate ease-in-out;
-      border-radius: 10px;
-    }
-    .sword::after {
-      content: ''; width: 10px; height: 20px; background: #333;
-      position: absolute; bottom: -20px; left: 20px;
-    }
-    @keyframes swing {
-      from { transform: rotate(-30deg) translateY(0); }
-      to { transform: rotate(30deg) translateY(20px); }
-    }
+    #score { font-size: 24px; }
+    #movementModeIndicator { font-size: 16px; color: #aaa; }
     #cooldownBar {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      height: 20px;
-      background: rgba(255,255,255,0.1);
-      border: 2px solid white;
+        width: 200px; height: 20px; background: rgba(255,255,255,0.1);
+        border: 2px solid white; position: relative;
     }
     #cooldownFill {
-      height: 100%;
-      background: white;
-      width: 100%;
+        position: absolute; top: 0; left: 0; height: 100%;
+        background: cyan; width: 0%; transition: width 0.1s linear;
+    }
+    #downedTimerBar {
+        position: absolute; width: 100px; height: 10px;
+        background: rgba(255, 0, 0, 0.2); border: 1px solid red;
+        display: none; z-index: 6;
+    }
+    #downedTimerFill { height: 100%; background: red; width: 100%; }
+    #menu, #gameOver {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: rgba(0, 0, 0, 0.9); z-index: 10; text-align: center;
+    }
+    #gameOver { display: none; }
+    #title {
+        font-size: 72px; font-weight: bold; margin-bottom: 40px;
+        animation: glow 1.5s ease-in-out infinite alternate; color: #eee;
+    }
+    @keyframes glow {
+        from { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px cyan; }
+        to { text-shadow: 0 0 20px #fff, 0 0 30px cyan, 0 0 40px cyan; }
+    }
+    #startBtn, #restartBtn {
+        padding: 18px 35px; font-size: 28px; cursor: pointer;
+        background: #4CAF50; color: white; border: none; border-radius: 10px;
+        transition: background 0.3s, transform 0.1s; margin-top: 20px;
+        box-shadow: 0 5px #999;
+    }
+    #startBtn:hover, #restartBtn:hover { background: #45a049; }
+    #startBtn:active, #restartBtn:active {
+        background-color: #3e8e41; box-shadow: 0 2px #666; transform: translateY(4px);
+    }
+    #instructions { margin-top: 30px; color: #ccc; line-height: 1.6; }
+    #finalScore { font-size: 36px; margin-bottom: 20px; color: yellow; }
+    .sword {
+        width: 50px; height: 150px; background: linear-gradient(#ddd, #aaa);
+        position: absolute; top: 20%; animation: swing 2.5s infinite alternate ease-in-out;
+        border-radius: 10px; border: 1px solid #777;
+    }
+    .sword::after {
+        content: ''; width: 15px; height: 30px; background: #553322;
+        position: absolute; bottom: -30px; left: 17.5px; border-radius: 5px;
+    }
+    @keyframes swing {
+        from { transform: rotate(-35deg) translateY(0); }
+        to { transform: rotate(35deg) translateY(30px); }
     }
   </style>
 </head>
 <body>
+
 <div id="menu">
-  <div class="sword" style="left: 30%;"></div>
-  <div class="sword" style="left: 70%; animation-delay: 1s;"></div>
-  <div id="title">dodge</div>
-  <button id="startBtn">play</button>
+  <div class="sword" style="left: 25%;"></div>
+  <div class="sword" style="left: 75%; animation-delay: -1.2s;"></div>
+  <div id="title">TRUE DODGE</div>
+  <button id="startBtn">PLAY</button>
+  <div id="instructions">
+    Use WASD or Mouse (Toggle with 'M') to move.<br/>
+    Right-Click to throw Boomerang.<br/>
+    If hit while Boomerang is out, it can revive you!<br/>
+    Dodge everything!
+  </div>
 </div>
+
 <div id="gameOver" style="display:none;">
   <h1>Game Over</h1>
+  <div id="finalScore">Score: 0</div>
   <button id="restartBtn">Restart</button>
 </div>
-<div id="cooldownBar" style="display:none;"><div id="cooldownFill"></div></div>
+
+<div id="uiOverlay">
+    <div id="topUI">
+        <div id="score">Score: 0</div>
+        <div id="movementModeIndicator">Mode: Keyboard (M to toggle)</div>
+        <div id="cooldownBar"><div id="cooldownFill"></div></div>
+    </div>
+     <div id="downedTimerBar"><div id="downedTimerFill"></div></div>
+</div>
+
 <canvas id="gameCanvas"></canvas>
+
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+  // --- Get DOM Elements ---
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas?.getContext('2d');
+  const menu = document.getElementById('menu');
+  const gameOverScreen = document.getElementById('gameOver');
+  const startBtn = document.getElementById('startBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const uiOverlay = document.getElementById('uiOverlay');
+  const cooldownBar = document.getElementById('cooldownBar');
+  const cooldownFill = document.getElementById('cooldownFill');
+  const scoreDisplay = document.getElementById('score');
+  const finalScoreDisplay = document.getElementById('finalScore');
+  const movementModeIndicator = document.getElementById('movementModeIndicator');
+  const downedTimerBar = document.getElementById('downedTimerBar');
+  const downedTimerFill = document.getElementById('downedTimerFill');
+  console.log("Script Start: All DOM elements potentially retrieved.");
 
-const menu = document.getElementById('menu');
-const gameOverScreen = document.getElementById('gameOver');
-const startBtn = document.getElementById('startBtn');
-const restartBtn = document.getElementById('restartBtn');
-const cooldownBar = document.getElementById('cooldownBar');
-const cooldownFill = document.getElementById('cooldownFill');
+  // --- Constants ---
+  const PLAYER_STATE = { ALIVE: 'alive', DOWNED: 'downed', DEAD: 'dead' };
+  const BOOMERANG_COOLDOWN = 6000;
+  const BOOMERANG_SPEED = 7;
+  const BOOMERANG_RANGE = 350;
+  const BOOMERANG_SIZE = 10;
+  const DOWNED_DURATION = 7000;
+  const BASE_SPAWN_RATES = {
+      ball: 2000, lava: 3500, blade: 6000, zone: 8000, missile: 7000, laser: 10000, shield: 15000
+  };
 
-startBtn.onclick = () => { menu.style.display = 'none'; cooldownBar.style.display = 'block'; gameRunning = true; gameLoop(); };
-restartBtn.onclick = () => { location.reload(); };
+  // --- Game State Variables ---
+  let gameRunning = false;
+  let score = 0;
+  let startTime = 0;
+  let movementMode = 'keyboard';
+  let lastFrameTime = 0;
+  let gameTime = 0;
+  let lastDifficultyUpdateTime = -1;
+  let difficultyMultiplier = 1;
+  let boomerang = null;
+  let lastBoomerangTime = -BOOMERANG_COOLDOWN;
+  let downedStartTime = 0;
+  const keys = {};
+  // FIX: Include shields in the obstacles object
+  const obstacles = {
+    balls: [], lavaBlocks: [], blades: [], electricZones: [], homingMissiles: [], laserBeams: [],
+    shields: [] // <<< SHIELDS ADDED HERE
+  };
+  const particles = [];
+  const spawnTimers = {};
+  let canvasWidth, canvasHeight;
 
-let gameRunning = false;
+  // --- Player Object ---
+  const player = {
+    x: 0, y: 0, size: 15, speed: 4, state: PLAYER_STATE.ALIVE,
+    color: 'white', shielded: false, shieldTimer: 0, shieldDuration: 5000
+  };
+  const target = { x: 0, y: 0 };
+  console.log("Script Start: Player and Target objects created.");
 
-const player = { x: canvas.width / 2, y: canvas.height / 2, size: 20, speed: 3, alive: true };
-const target = { x: player.x, y: player.y };
-const keys = {};
-document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+  // --- Core Functions ---
 
-function updateKeyboardMovement() {
-  if (!player.alive) return;
-  if (keys['w']) player.y -= player.speed;
-  if (keys['a']) player.x -= player.speed;
-  if (keys['s']) player.y += player.speed;
-  if (keys['d']) player.x += player.speed;
-  player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
-  player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
-}
+  function resizeCanvas() {
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvasWidth = canvas.width;
+      canvasHeight = canvas.height;
+      if (player) {
+         if (!gameRunning) {
+             player.x = canvasWidth / 2;
+             player.y = canvasHeight / 2;
+         } else {
+             player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x));
+             player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y));
+         }
+         if(target){ target.x = player.x; target.y = player.y; }
+      }
+  }
 
-canvas.addEventListener('mousedown', e => { if (e.button === 0) isMouseDown = true; });
-canvas.addEventListener('mouseup', e => { if (e.button === 0) isMouseDown = false; });
-canvas.addEventListener('mousemove', e => {
-  if (isMouseDown) {
-    const rect = canvas.getBoundingClientRect();
-    target.x = e.clientX - rect.left;
-    target.y = e.clientY - rect.top;
-  }
-});
+  function startGame() {
+      console.log("--- startGame: Initiated ---");
+      if (!menu || !gameOverScreen || !uiOverlay || !startBtn || !canvas || !ctx) {
+          console.error("startGame Error: Essential elements missing!"); return;
+      }
 
-const balls = [], lavaBlocks = [], blades = [], electricZones = [];
-const maxBalls = 50;
+      try {
+          menu.style.display = 'none';
+          gameOverScreen.style.display = 'none';
+          uiOverlay.style.display = 'flex';
+      } catch (e) { console.error("startGame UI style error:", e); return; }
 
-function addBall() {
-  if (balls.length < maxBalls) {
-    balls.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: 20 + Math.random() * 30,
-      dx: (Math.random() - 0.5) * 4,
-      dy: (Math.random() - 0.5) * 4
-    });
-  }
-}
-function updateBalls() {
-  for (const ball of balls) {
-    ball.x += ball.dx;
-    ball.y += ball.dy;
-    if (ball.x <= 0 || ball.x + ball.size >= canvas.width) ball.dx *= -1;
-    if (ball.y <= 0 || ball.y + ball.size >= canvas.height) ball.dy *= -1;
-  }
-}
-function addLavaBlock() {
-  const width = 30 + Math.random() * 70;
-  lavaBlocks.push({ x: Math.random() * (canvas.width - width), y: -100, width, height: 30, speed: 2 + Math.random() * 3 });
-}
-function updateLavaBlocks() {
-  for (const lava of lavaBlocks) lava.y += lava.speed;
-}
-function addBlade() {
-  blades.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, angle: 0, radius: 40, speed: 0.05 });
-}
-function updateBlades() {
-  for (const blade of blades) blade.angle += blade.speed;
-}
-function addElectricZone() {
-  electricZones.push({ x: Math.random() * (canvas.width - 150), y: Math.random() * (canvas.height - 150), width: 100, height: 100, active: false, timer: 0 });
-}
-function updateElectricZones() {
-  for (const zone of electricZones) {
-    zone.timer++;
-    if (zone.timer > 100) zone.active = !zone.active, zone.timer = 0;
-  }
-}
-let isMouseDown = false;
-let boomerang = null;
-let savedByBoomerang = false;
-const cooldownTime = 5000;
-let lastBoomerangTime = -cooldownTime;
-canvas.addEventListener('contextmenu', e => {
-  e.preventDefault();
-  const now = Date.now();
-  if (!boomerang && player.alive && now - lastBoomerangTime >= cooldownTime) {
-    const rect = canvas.getBoundingClientRect();
-    const targetX = e.clientX - rect.left;
-    const targetY = e.clientY - rect.top;
-    const angle = Math.atan2(targetY - player.y, targetX - player.x);
-    boomerang = { x: player.x, y: player.y, radius: 8, speed: 1.5, angle, out: true };
-    lastBoomerangTime = now;
-  }
-});
-function updateBoomerang() {
-  if (!boomerang) return;
-  const dx = player.x - boomerang.x;
-  const dy = player.y - boomerang.y;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  if (boomerang.out) {
-    boomerang.x += Math.cos(boomerang.angle) * boomerang.speed;
-    boomerang.y += Math.sin(boomerang.angle) * boomerang.speed;
-    if (distance > 300) boomerang.out = false;
-  } else {
-    const angleBack = Math.atan2(player.y - boomerang.y, player.x - boomerang.x);
-    boomerang.x += Math.cos(angleBack) * boomerang.speed;
-    boomerang.y += Math.sin(angleBack) * boomerang.speed;
-    if (distance < player.size + boomerang.radius) {
-      if (!player.alive) player.alive = true;
-      boomerang = null;
-    }
-  }
-  const elapsed = Date.now() - lastBoomerangTime;
-  cooldownFill.style.width = `${Math.min(100, (elapsed / cooldownTime) * 100)}%`;
-}
-function updatePlayer() {
-  const dx = target.x - player.x;
-  const dy = target.y - player.y;
-  player.x += dx * 0.1;
-  player.y += dy * 0.1;
-}
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'black';
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'red';
-  for (const ball of balls) {
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.fillStyle = 'orange';
-  for (const lava of lavaBlocks) ctx.fillRect(lava.x, lava.y, lava.width, lava.height);
-  ctx.fillStyle = 'gray';
-  for (const blade of blades) {
-    ctx.save();
-    ctx.translate(blade.x, blade.y);
-    ctx.rotate(blade.angle);
-    ctx.fillRect(-blade.radius, -5, blade.radius * 2, 10);
-    ctx.restore();
-  }
-  for (const zone of electricZones) {
-    ctx.fillStyle = zone.active ? 'cyan' : 'rgba(0,255,255,0.2)';
-    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
-  }
-  if (boomerang) {
-    ctx.fillStyle = 'white';
-    ctx.beginPath();
-    ctx.arc(boomerang.x, boomerang.y, boomerang.radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-function checkCollision() {
-  if (!player.alive) return;
-  for (const ball of balls) {
-    const dx = player.x - ball.x;
-    const dy = player.y - ball.y;
-    if (Math.sqrt(dx * dx + dy * dy) < player.size / 2 + ball.size / 2) return killPlayer();
-  }
-  for (const lava of lavaBlocks) {
-    if (player.x > lava.x && player.x < lava.x + lava.width && player.y > lava.y && player.y < lava.y + lava.height)
-      return killPlayer();
-  }
-  for (const blade of blades) {
-    const dx = player.x - blade.x, dy = player.y - blade.y;
-    if (Math.sqrt(dx * dx + dy * dy) < blade.radius) return killPlayer();
-  }
-  for (const zone of electricZones) {
-    if (zone.active && player.x > zone.x && player.x < zone.x + zone.width && player.y > zone.y && player.y < zone.y + zone.height)
-      return killPlayer();
-  }
-}
-function killPlayer() {
-  player.alive = false;
-  setTimeout(() => {
-    if (!player.alive) {
+      try {
+        gameRunning = true;
+        score = 0; gameTime = 0; difficultyMultiplier = 1; lastDifficultyUpdateTime = -1;
+        startTime = Date.now(); lastFrameTime = performance.now();
+        player.state = PLAYER_STATE.ALIVE; player.shielded = false; player.shieldTimer = 0; player.color = 'white';
+        resizeCanvas(); // Position player correctly for start
+
+        boomerang = null; lastBoomerangTime = -BOOMERANG_COOLDOWN;
+        if(cooldownFill) cooldownFill.style.width = '100%';
+        if(downedTimerBar) downedTimerBar.style.display = 'none';
+
+        // FIX: This loop now correctly clears the shields array within obstacles
+        for (const key in obstacles) { obstacles[key] = []; }
+        particles.length = 0;
+        console.log("startGame: Game state variables reset.");
+
+      } catch (e) { console.error("startGame State reset error:", e); gameRunning = false; return; }
+
+      try {
+        console.log("startGame: Setting up spawners...");
+        clearAllSpawnTimers();
+        setupSpawners();
+      } catch (e) { console.error("startGame Spawner error:", e); gameRunning = false; return; }
+
+      try {
+          console.log("startGame: Requesting first animation frame...");
+          requestAnimationFrame(gameLoop);
+          console.log("--- startGame: Finished successfully, loop requested. ---");
+      } catch (e) { console.error("startGame RAF error:", e); gameRunning = false; }
+  } // End of startGame
+
+  function gameOver() {
+      console.log("gameOver called. Final Score:", score);
       gameRunning = false;
-      gameOverScreen.style.display = 'flex';
-    }
-  }, 1000);
-}
-function gameLoop() {
-  if (!gameRunning) return;
-  updateKeyboardMovement();
-  updatePlayer();
-  updateBalls();
-  updateLavaBlocks();
-  updateBoomerang();
-  updateBlades();
-  updateElectricZones();
-  checkCollision();
-  draw();
-  requestAnimationFrame(gameLoop);
-}
-for (let i = 0; i < 5; i++) addBall();
-setInterval(addBall, 2000);
-setInterval(addLavaBlock, 3000);
-setInterval(addBlade, 5000);
-setInterval(addElectricZone, 7000);
+      player.state = PLAYER_STATE.DEAD;
+      if(finalScoreDisplay) finalScoreDisplay.textContent = `Score: ${score}`;
+      if(gameOverScreen) gameOverScreen.style.display = 'flex';
+      if(uiOverlay) uiOverlay.style.display = 'none';
+      clearAllSpawnTimers();
+  }
+
+  function clearAllSpawnTimers() {
+       for(const key in spawnTimers) {
+           if (spawnTimers[key]) { clearInterval(spawnTimers[key]); spawnTimers[key] = null; }
+       }
+  }
+
+  function setupSpawners() {
+      for (let i = 0; i < 3; i++) addBall();
+      addLavaBlock();
+      const rates = BASE_SPAWN_RATES; const multi = difficultyMultiplier;
+      spawnTimers.ball = setInterval(addBall, rates.ball / multi);
+      spawnTimers.lava = setInterval(addLavaBlock, rates.lava / multi);
+      spawnTimers.blade = setInterval(addBlade, rates.blade / multi);
+      spawnTimers.zone = setInterval(addElectricZone, rates.zone / multi);
+      spawnTimers.missile = setInterval(addHomingMissile, rates.missile / multi);
+      spawnTimers.laser = setInterval(addLaserBeam, rates.laser / multi);
+      spawnTimers.shield = setInterval(addShieldPowerup, rates.shield); // Shield spawn rate doesn't scale currently
+  }
+
+  function updateSpawnRates() {
+      console.log("Updating spawn rates...");
+      clearAllSpawnTimers();
+      difficultyMultiplier = 1 + (gameTime / 75000);
+      setupSpawners();
+      console.log("New Difficulty Multiplier:", difficultyMultiplier);
+  }
+
+  // --- Update Functions ---
+  function update(dt) {
+      if (player.state === PLAYER_STATE.DEAD) return;
+      gameTime += dt * 1000;
+      score = Math.floor(gameTime / 100);
+      if(scoreDisplay) scoreDisplay.textContent = `Score: ${score}`;
+      const currentSecondFloored = Math.floor(gameTime / 1000);
+      if (currentSecondFloored > 0 && currentSecondFloored % 30 === 0 && currentSecondFloored !== lastDifficultyUpdateTime) {
+          updateSpawnRates(); lastDifficultyUpdateTime = currentSecondFloored;
+      }
+      updatePlayer(dt);
+      updateBoomerang(dt);
+      updateObstacles(dt);
+      updatePowerups(dt); // Update shields
+      updateParticles(dt);
+      checkCollisions();
+      updateCooldownAndTimers();
+      if (player.state === PLAYER_STATE.DOWNED) {
+          const elapsedDowned = Date.now() - downedStartTime;
+          if (elapsedDowned >= DOWNED_DURATION) { createExplosion(player.x, player.y, 'white', 30); gameOver(); }
+          else {
+              const remainingRatio = 1 - (elapsedDowned / DOWNED_DURATION);
+              if(downedTimerFill) downedTimerFill.style.width = `${Math.max(0, remainingRatio * 100)}%`;
+              if(downedTimerBar){ downedTimerBar.style.left = `${player.x - downedTimerBar.offsetWidth / 2}px`; downedTimerBar.style.bottom = `${canvasHeight - player.y + player.size + 10}px`; }
+          }
+      }
+  }
+  function updatePlayer(dt) { if (player.state === PLAYER_STATE.DEAD) return; if (player.state === PLAYER_STATE.ALIVE) { if (movementMode === 'keyboard') { updateKeyboardMovement(dt); } else { updateMouseMovement(dt); } player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x)); player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y)); } if (player.shielded) { player.shieldTimer -= dt * 1000; if (player.shieldTimer <= 0) { player.shielded = false; player.shieldTimer = 0; } } if (player.state === PLAYER_STATE.DOWNED) { player.color = '#888'; } else if (player.shielded) { const shieldPulse = Math.abs(Math.sin(Date.now() * 0.01)); player.color = `rgba(0, 255, 255, ${0.5 + shieldPulse * 0.5})`; } else { player.color = 'white'; } }
+  function updateKeyboardMovement(dt) { let dx = 0; let dy = 0; if (keys['w'] || keys['arrowup']) dy -= player.speed; if (keys['a'] || keys['arrowleft']) dx -= player.speed; if (keys['s'] || keys['arrowdown']) dy += player.speed; if (keys['d'] || keys['arrowright']) dx += player.speed; if (dx !== 0 && dy !== 0) { dx *= 0.7071; dy *= 0.7071; } player.x += dx; player.y += dy; }
+  function updateMouseMovement(dt) { const dx = target.x - player.x; const dy = target.y - player.y; const dist = Math.sqrt(dx * dx + dy * dy); const lerpFactor = 0.15; if (dist > 1) { player.x += dx * lerpFactor; player.y += dy * lerpFactor; } else { player.x = target.x; player.y = target.y; } }
+  function tryThrowBoomerang() { const now = Date.now(); if (!boomerang && now - lastBoomerangTime >= BOOMERANG_COOLDOWN) { const angle = Math.atan2(target.y - player.y, target.x - player.x); boomerang = { x: player.x, y: player.y, startX: player.x, startY: player.y, radius: BOOMERANG_SIZE, speed: BOOMERANG_SPEED, angle: angle, out: true, rotation: 0 }; lastBoomerangTime = now; if(cooldownFill) cooldownFill.style.width = '0%'; } }
+  function updateBoomerang(dt) { if (!boomerang) { return; } boomerang.rotation += 15 * dt; let targetX, targetY; let currentAngle; if (boomerang.out) { const targetRangeX = boomerang.startX + Math.cos(boomerang.angle) * BOOMERANG_RANGE; const targetRangeY = boomerang.startY + Math.sin(boomerang.angle) * BOOMERANG_RANGE; const dxToRange = targetRangeX - boomerang.x; const dyToRange = targetRangeY - boomerang.y; currentAngle = Math.atan2(dyToRange, dxToRange); const distFromStart = Math.sqrt(Math.pow(boomerang.x - boomerang.startX, 2) + Math.pow(boomerang.y - boomerang.startY, 2)); if (distFromStart >= BOOMERANG_RANGE || (dxToRange*dxToRange + dyToRange*dyToRange < boomerang.speed*boomerang.speed)) { boomerang.out = false; } } else { targetX = player.x; targetY = player.y; const dxToPlayer = targetX - boomerang.x; const dyToPlayer = targetY - boomerang.y; currentAngle = Math.atan2(dyToPlayer, dxToPlayer); const distToPlayer = Math.sqrt(dxToPlayer*dxToPlayer + dyToPlayer*dyToPlayer); if (distToPlayer < player.size + boomerang.radius) { if (player.state === PLAYER_STATE.DOWNED) { player.state = PLAYER_STATE.ALIVE; player.color = 'white'; createParticles(player.x, player.y, 'cyan', 15); if(downedTimerBar) downedTimerBar.style.display = 'none'; } boomerang = null; return; } } boomerang.x += Math.cos(currentAngle) * boomerang.speed; boomerang.y += Math.sin(currentAngle) * boomerang.speed; if (boomerang.x < -100 || boomerang.x > canvasWidth + 100 || boomerang.y < -100 || boomerang.y > canvasHeight + 100) { boomerang = null; } }
+  function updateObstacles(dt) { const multi = difficultyMultiplier; obstacles.balls = obstacles.balls.filter(ball => { ball.x += ball.dx * multi; ball.y += ball.dy * multi; if (ball.x <= ball.size / 2) { ball.dx = Math.abs(ball.dx); ball.x = ball.size / 2; } if (ball.x >= canvasWidth - ball.size / 2) { ball.dx = -Math.abs(ball.dx); ball.x = canvasWidth - ball.size / 2; } if (ball.y <= ball.size / 2) { ball.dy = Math.abs(ball.dy); ball.y = ball.size / 2; } if (ball.y >= canvasHeight - ball.size / 2) { ball.dy = -Math.abs(ball.dy); ball.y = canvasHeight - ball.size / 2; } return !(ball.x < -ball.size * 2 || ball.x > canvasWidth + ball.size * 2 || ball.y < -ball.size * 2 || ball.y > canvasHeight + ball.size * 2); }); obstacles.lavaBlocks = obstacles.lavaBlocks.filter(lava => { lava.y += lava.speed * multi; return lava.y <= canvasHeight + lava.height; }); obstacles.blades.forEach(blade => { blade.angle += blade.speed * multi; }); obstacles.electricZones.forEach(zone => { zone.timer += dt * 1000; if (zone.timer >= zone.interval) { zone.active = !zone.active; zone.timer = 0; zone.interval = zone.active ? zone.onDuration : zone.offDuration; } }); obstacles.homingMissiles = obstacles.homingMissiles.filter((missile) => { const dx = player.x - missile.x; const dy = player.y - missile.y; const angle = Math.atan2(dy, dx); const speedMultiplier = 1; missile.x += Math.cos(angle) * missile.speed * multi * speedMultiplier; missile.y += Math.sin(angle) * missile.speed * multi * speedMultiplier; missile.angle = angle; missile.life -= dt * 1000; if (missile.life <= 0) { createExplosion(missile.x, missile.y, 'orange', 5); return false; } return true; }); obstacles.laserBeams = obstacles.laserBeams.filter((laser) => { laser.timer += dt * 1000; if (laser.state === 'warning' && laser.timer >= laser.warningDuration) { laser.state = 'firing'; laser.timer = 0; } else if (laser.state === 'firing' && laser.timer >= laser.fireDuration) { return false; } return true; }); }
+  // FIX: This function now correctly accesses obstacles.shields
+  function updatePowerups(dt) {
+      obstacles.shields = obstacles.shields.filter((shield) => {
+          shield.y += 1 * difficultyMultiplier; // Simple downward movement
+          shield.bobOffset = (shield.bobOffset || 0) + dt * 3;
+          shield.displayY = shield.y + Math.sin(shield.bobOffset + shield.x) * 3; // Bobbing
+          return shield.y <= canvasHeight + shield.size; // Remove if off screen
+      });
+  }
+  function updateParticles(dt) { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.vy += 0.1 * dt * 60; p.life -= dt * 1000; p.alpha = Math.max(0, p.life / p.maxLife); if (p.life <= 0) { particles.splice(i, 1); } } }
+  function updateCooldownAndTimers() { if (!boomerang) { const elapsed = Date.now() - lastBoomerangTime; const cooldownProgress = Math.min(1, elapsed / BOOMERANG_COOLDOWN); const newWidth = `${cooldownProgress * 100}%`; if(cooldownFill && cooldownFill.style.width !== newWidth) { cooldownFill.style.width = newWidth; } } else { if(cooldownFill && cooldownFill.style.width !== '0%') { cooldownFill.style.width = '0%'; } } }
+
+  // --- Drawing Functions ---
+  function draw() { if (!ctx) return; ctx.clearRect(0, 0, canvasWidth, canvasHeight); drawObstacles(); drawPowerups(); drawParticles(); if (boomerang) drawBoomerang(); if (player.state !== PLAYER_STATE.DEAD) drawPlayer(); drawLasers(); }
+  function drawPlayer() { ctx.save(); if (player.shielded) { ctx.beginPath(); ctx.arc(player.x, player.y, player.size + 5 + Math.sin(Date.now() * 0.01) * 2, 0, Math.PI * 2); ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 + Math.abs(Math.sin(Date.now() * 0.01)) * 0.4})`; ctx.lineWidth = 3; ctx.stroke(); } ctx.fillStyle = player.color; ctx.beginPath(); ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = (player.state === PLAYER_STATE.DOWNED) ? '#555' : '#333'; ctx.beginPath(); ctx.arc(player.x, player.y, player.size * 0.4, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+  function drawBoomerang() { ctx.save(); ctx.translate(boomerang.x, boomerang.y); ctx.rotate(boomerang.rotation); ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.moveTo(0, -boomerang.radius); ctx.lineTo(boomerang.radius * 1.2, boomerang.radius * 0.8); ctx.lineTo(0, boomerang.radius * 0.3); ctx.lineTo(-boomerang.radius * 1.2, boomerang.radius * 0.8); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'orange'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); }
+  function drawObstacles() { ctx.fillStyle = '#ff4444'; obstacles.balls.forEach(ball => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2); ctx.fill(); }); ctx.fillStyle = '#ff8800'; obstacles.lavaBlocks.forEach(lava => { ctx.fillRect(lava.x, lava.y, lava.width, lava.height); }); ctx.fillStyle = '#aaaaaa'; obstacles.blades.forEach(blade => { ctx.save(); ctx.translate(blade.x, blade.y); ctx.rotate(blade.angle); const halfThick = blade.thickness / 2; ctx.fillRect(-blade.radius, -halfThick, blade.radius * 2, blade.thickness); ctx.fillRect(-halfThick, -blade.radius, blade.thickness, blade.radius * 2); ctx.restore(); }); obstacles.electricZones.forEach(zone => { if (zone.active) { ctx.fillStyle = 'rgba(0, 255, 255, 0.7)'; ctx.fillRect(zone.x, zone.y, zone.width, zone.height); if (Math.random() > 0.3) { ctx.strokeStyle = 'white'; ctx.lineWidth = Math.random() * 2 + 0.5; ctx.beginPath(); const startX = zone.x + Math.random() * zone.width; const startY = zone.y + Math.random() * zone.height; const endX = startX + (Math.random() - 0.5) * 40; const endY = startY + (Math.random() - 0.5) * 40; ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke(); } } else { ctx.fillStyle = 'rgba(0, 100, 100, 0.2)'; ctx.fillRect(zone.x, zone.y, zone.width, zone.height); ctx.strokeStyle = 'rgba(0, 200, 200, 0.3)'; ctx.lineWidth = 1; ctx.strokeRect(zone.x, zone.y, zone.width, zone.height); } }); obstacles.homingMissiles.forEach(missile => { ctx.save(); ctx.translate(missile.x, missile.y); ctx.rotate(missile.angle + Math.PI / 2); ctx.fillStyle = '#cc33ff'; ctx.beginPath(); ctx.moveTo(0, -missile.size * 1.2); ctx.lineTo(-missile.size * 0.6, missile.size * 0.6); ctx.lineTo(missile.size * 0.6, missile.size * 0.6); ctx.closePath(); ctx.fill(); const flameLength = missile.size * (1 + Math.random()); const flameWidth = missile.size * (0.6 + Math.random() * 0.3); ctx.fillStyle = `rgba(255, ${Math.random() * 100 + 100}, 0, ${0.6 + Math.random() * 0.3})`; ctx.fillRect(-flameWidth / 2, missile.size * 0.6 , flameWidth, flameLength); ctx.restore(); }); obstacles.laserBeams.forEach(laser => { if (laser.state === 'warning') { ctx.save(); ctx.beginPath(); ctx.moveTo(laser.startX, laser.startY); ctx.lineTo(laser.endX, laser.endY); const warnProgress = laser.timer / laser.warningDuration; const alpha = 0.1 + Math.abs(Math.sin(warnProgress * Math.PI * 4)) * 0.4; const widthPulse = laser.width * (0.2 + warnProgress * 0.8); ctx.strokeStyle = `rgba(255, 0, 0, ${alpha})`; ctx.lineWidth = widthPulse; ctx.setLineDash([15, 10]); ctx.lineCap = 'round'; ctx.stroke(); ctx.restore(); } }); }
+  function drawLasers() { obstacles.laserBeams.forEach(laser => { if (laser.state === 'firing') { ctx.save(); ctx.beginPath(); ctx.moveTo(laser.startX, laser.startY); ctx.lineTo(laser.endX, laser.endY); ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(255, 100, 100, 0.4)'; ctx.lineWidth = laser.width * 1.5; ctx.stroke(); ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'; ctx.lineWidth = laser.width; ctx.stroke(); ctx.strokeStyle = 'white'; ctx.lineWidth = laser.width * 0.3; ctx.stroke(); ctx.restore(); } }); }
+  // FIX: This function now correctly accesses obstacles.shields
+  function drawPowerups() {
+      ctx.fillStyle = 'lime';
+      obstacles.shields.forEach(shield => {
+          const y = shield.displayY !== undefined ? shield.displayY : shield.y;
+          ctx.beginPath();
+          ctx.arc(shield.x, y, shield.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#333';
+          ctx.font = `bold ${shield.size * 1.2}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('+', shield.x, y + 1);
+      });
+  }
+  function drawParticles() { particles.forEach(p => { ctx.fillStyle = `rgba(${hexToRgb(p.color).r}, ${hexToRgb(p.color).g}, ${hexToRgb(p.color).b}, ${p.alpha})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }); }
+
+  // --- Collision Detection ---
+  function checkCollisions() { if (player.state !== PLAYER_STATE.ALIVE) return; let hit = false; let hitType = ''; if (!player.shielded) { obstacles.shields.forEach((shield, index) => { if (hit) return; const y = shield.displayY !== undefined ? shield.displayY : shield.y; const dx = player.x - shield.x; const dy = player.y - y; if (Math.sqrt(dx * dx + dy * dy) < player.size + shield.size) { player.shielded = true; player.shieldTimer = player.shieldDuration; obstacles.shields.splice(index, 1); createParticles(player.x, player.y, 'lime', 20); } }); } if (player.shielded) return; obstacles.balls.forEach(ball => { if (hit) return; const dx = player.x - ball.x; const dy = player.y - ball.y; if (Math.sqrt(dx * dx + dy * dy) < player.size + ball.size / 2) { hit = true; hitType = 'ball'; } }); obstacles.lavaBlocks.forEach(lava => { if (hit) return; if (player.x > lava.x && player.x < lava.x + lava.width && player.y > lava.y && player.y < lava.y + lava.height) { hit = true; hitType = 'lava'; } }); obstacles.blades.forEach(blade => { if (hit) return; const dx = player.x - blade.x; const dy = player.y - blade.y; if (Math.sqrt(dx*dx + dy*dy) < player.size + blade.radius * 0.8) { hit = true; hitType = 'blade'; } }); obstacles.electricZones.forEach(zone => { if (hit) return; if (zone.active && player.x > zone.x && player.x < zone.x + zone.width && player.y > zone.y && player.y < zone.y + zone.height) { hit = true; hitType = 'zone'; } }); for (let i = obstacles.homingMissiles.length - 1; i >= 0; i--) { if (hit) break; const missile = obstacles.homingMissiles[i]; const dx = player.x - missile.x; const dy = player.y - missile.y; if (Math.sqrt(dx * dx + dy * dy) < player.size + missile.size) { hit = true; hitType = 'missile'; createExplosion(missile.x, missile.y, 'purple', 25); obstacles.homingMissiles.splice(i, 1); } } obstacles.laserBeams.forEach(laser => { if (hit) return; if (laser.state === 'firing') { if (pointLineSegmentDistance(player.x, player.y, laser.startX, laser.startY, laser.endX, laser.endY) < player.size + laser.width / 2) { hit = true; hitType = 'laser'; } } }); if (hit) { handlePlayerHit(); } }
+  function handlePlayerHit() { if (player.state !== PLAYER_STATE.ALIVE) return; if (boomerang) { player.state = PLAYER_STATE.DOWNED; downedStartTime = Date.now(); if(downedTimerBar) downedTimerBar.style.display = 'block'; if(downedTimerFill) downedTimerFill.style.width = '100%'; createParticles(player.x, player.y, '#FFA500', 15); if(downedTimerBar){ downedTimerBar.style.left = `${player.x - downedTimerBar.offsetWidth / 2}px`; downedTimerBar.style.bottom = `${canvasHeight - player.y + player.size + 10}px`;} } else { createExplosion(player.x, player.y, 'white', 40); gameOver(); } }
+
+  // --- Object Creation Functions ---
+  function addBall() { const edge = Math.floor(Math.random() * 4); const size = 15 + Math.random() * 25; let x, y, dx, dy; const baseSpeed = 1 + Math.random() * 1.5; switch(edge) { case 0: x = Math.random() * canvasWidth; y = -size; dx = (Math.random() - 0.5) * 4; dy = baseSpeed; break; case 1: x = canvasWidth + size; y = Math.random() * canvasHeight; dx = -baseSpeed; dy = (Math.random() - 0.5) * 4; break; case 2: x = Math.random() * canvasWidth; y = canvasHeight + size; dx = (Math.random() - 0.5) * 4; dy = -baseSpeed; break; case 3: x = -size; y = Math.random() * canvasHeight; dx = baseSpeed; dy = (Math.random() - 0.5) * 4; break; } obstacles.balls.push({ x, y, size, dx, dy }); }
+  function addLavaBlock() { const width = 40 + Math.random() * 80; obstacles.lavaBlocks.push({ x: Math.random() * (canvasWidth - width), y: -100, width, height: 25 + Math.random() * 35, speed: 1.5 + Math.random() * 2 }); }
+  function addBlade() { obstacles.blades.push({ x: Math.random() * canvasWidth, y: Math.random() * canvasHeight, angle: Math.random() * Math.PI * 2, radius: 35 + Math.random() * 45, thickness: 8 + Math.random() * 7, speed: (0.04 + Math.random() * 0.06) * (Math.random() > 0.5 ? 1 : -1) }); }
+  function addElectricZone() { const size = 90 + Math.random() * 130; const offDuration = 2500 + Math.random() * 3500; obstacles.electricZones.push({ x: Math.random() * (canvasWidth - size), y: Math.random() * (canvasHeight - size), width: size, height: size, active: false, timer: 0, onDuration: 1200 + Math.random() * 1800, offDuration: offDuration, interval: offDuration }); }
+  function addHomingMissile() { const edge = Math.floor(Math.random() * 4); let x, y; const size = 9 + Math.random() * 5; switch(edge) { case 0: x = Math.random() * canvasWidth; y = -size; break; case 1: x = canvasWidth + size; y = Math.random() * canvasHeight; break; case 2: x = Math.random() * canvasWidth; y = canvasHeight + size; break; case 3: x = -size; y = Math.random() * canvasHeight; break; } obstacles.homingMissiles.push({ x, y, size, speed: 1.2 + Math.random() * 0.6, angle: 0, life: 7000 + Math.random() * 5000 }); }
+  function addLaserBeam() { const edge = Math.floor(Math.random() * 2); const width = 12 + Math.random() * 18; let startX, startY, endX, endY; if (edge === 0) { startY = Math.random() * canvasHeight; endY = startY; startX = (Math.random() > 0.5) ? -width * 2 : canvasWidth + width * 2; endX = (startX < 0) ? canvasWidth + width * 2 : -width * 2; } else { startX = Math.random() * canvasWidth; endX = startX; startY = (Math.random() > 0.5) ? -width * 2 : canvasHeight + width * 2; endY = (startY < 0) ? canvasHeight + width * 2 : -width * 2; } obstacles.laserBeams.push({ startX, startY, endX, endY, width, state: 'warning', timer: 0, warningDuration: 1300 + Math.random() * 900, fireDuration: 400 + Math.random() * 400 }); }
+  // FIX: This function now correctly adds to obstacles.shields
+  function addShieldPowerup() {
+      const size = 12;
+      obstacles.shields.push({
+          x: Math.random() * (canvasWidth - size * 2) + size,
+          y: -30, size: size, bobOffset: Math.random() * Math.PI * 2
+      });
+  }
+
+  // --- Effects Functions ---
+  function createParticles(x, y, color, count) { for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 4 + 1; particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1, size: Math.random() * 2.5 + 1, life: 400 + Math.random() * 400, maxLife: 400 + Math.random() * 400, color: color, alpha: 1 }); } }
+  function createExplosion(x, y, color, count) { for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 6 + 3; particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, size: Math.random() * 3.5 + 1.5, life: 500 + Math.random() * 500, maxLife: 500 + Math.random() * 500, color: color, alpha: 1 }); } }
+
+  // --- Utility Functions ---
+  function toggleMovementMode() { movementMode = (movementMode === 'keyboard') ? 'mouse' : 'keyboard'; if(movementModeIndicator) movementModeIndicator.textContent = `Mode: ${movementMode.charAt(0).toUpperCase() + movementMode.slice(1)} (M to toggle)`; if (movementMode === 'keyboard') { target.x = player.x; target.y = player.y; } }
+  function hexToRgb(hex) { var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i; hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b); var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : { r: 255, g: 255, b: 255 }; }
+  function pointLineSegmentDistance(px, py, x1, y1, x2, y2) { const l2 = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1); if (l2 === 0) return Math.sqrt((px - x1) * (px - x1) + (py - y1) * (py - y1)); let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2; t = Math.max(0, Math.min(1, t)); const projX = x1 + t * (x2 - x1); const projY = y1 + t * (y2 - y1); return Math.sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY)); }
+
+  // --- Main Game Loop ---
+  let frameCount = 0;
+  function gameLoop(currentTime) {
+      frameCount++;
+      if (!gameRunning) { return; }
+
+      if (!lastFrameTime) lastFrameTime = currentTime;
+      const dt = Math.min(0.1, (currentTime - lastFrameTime) / 1000);
+      lastFrameTime = currentTime;
+
+      try { update(dt); }
+      catch (e) { console.error(`Update Error frame ${frameCount}:`, e); gameRunning = false; try { gameOver(); } catch (goE) { } alert("Update Error. See console."); return; }
+
+      try { draw(); }
+      catch (e) { console.error(`Draw Error frame ${frameCount}:`, e); gameRunning = false; try { gameOver(); } catch (goE) { } alert("Draw Error. See console."); return; }
+
+      requestAnimationFrame(gameLoop);
+  } // End of gameLoop
+
+  // --- Event Listeners Setup ---
+  function setupEventListeners() {
+      console.log("Setting up event listeners...");
+      window.addEventListener('resize', resizeCanvas);
+      document.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; if (e.key.toLowerCase() === 'm' && gameRunning) { toggleMovementMode(); } });
+      document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+      if (canvas) {
+          canvas.addEventListener('mousemove', e => { const rect = canvas.getBoundingClientRect(); target.x = e.clientX - rect.left; target.y = e.clientY - rect.top; });
+          canvas.addEventListener('contextmenu', e => { e.preventDefault(); if (!gameRunning || player.state !== PLAYER_STATE.ALIVE) return; tryThrowBoomerang(); });
+      } else { console.error("Cannot add canvas listeners."); }
+      if (startBtn) { startBtn.onclick = startGame; } else { console.error("Start button not found."); }
+      if (restartBtn) { restartBtn.onclick = () => { location.reload(); }; } else { console.error("Restart button not found."); }
+      console.log("Event listeners setup complete.");
+  }
+
+  // --- Initialization ---
+  function initializeGame() {
+      console.log("Initializing game...");
+      if (!canvas || !ctx) { console.error("FATAL: Canvas/Context missing."); alert("Canvas Error."); return; }
+      resizeCanvas();
+      setupEventListeners();
+      if(uiOverlay) uiOverlay.style.display = 'none';
+      if(gameOverScreen) gameOverScreen.style.display = 'none';
+      if(menu) menu.style.display = 'flex';
+      console.log("Game Initialized. Ready.");
+  }
+
+  // --- Start Everything ---
+  initializeGame();
+
 </script>
 </body>
 </html>
