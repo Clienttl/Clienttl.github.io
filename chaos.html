@@ -2,417 +2,420 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>True Dodge Enhanced - Fixed v2</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; overflow: hidden; background: #111; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
-    canvas { display: block; margin: auto; background: #222; cursor: crosshair; }
-    #uiOverlay {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        pointer-events: none; z-index: 5;
-        display: none; /* Start hidden */
-        flex-direction: column; justify-content: space-between; align-items: center;
-        padding: 15px;
-    }
-    #topUI {
-        width: 100%; display: flex; justify-content: space-between; align-items: center;
-    }
-    #score { font-size: 24px; }
-    #movementModeIndicator { font-size: 16px; color: #aaa; }
-    #cooldownBar {
-        width: 200px; height: 20px; background: rgba(255,255,255,0.1);
-        border: 2px solid white; position: relative;
-    }
-    #cooldownFill {
-        position: absolute; top: 0; left: 0; height: 100%;
-        background: cyan; width: 0%; transition: width 0.1s linear;
-    }
-    #downedTimerBar {
-        position: absolute; width: 100px; height: 10px;
-        background: rgba(255, 0, 0, 0.2); border: 1px solid red;
-        display: none; z-index: 6;
-    }
-    #downedTimerFill { height: 100%; background: red; width: 100%; }
-    #menu, #gameOver {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        background: rgba(0, 0, 0, 0.9); z-index: 10; text-align: center;
-    }
-    #gameOver { display: none; }
-    #title {
-        font-size: 72px; font-weight: bold; margin-bottom: 40px;
-        animation: glow 1.5s ease-in-out infinite alternate; color: #eee;
-    }
-    @keyframes glow {
-        from { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px cyan; }
-        to { text-shadow: 0 0 20px #fff, 0 0 30px cyan, 0 0 40px cyan; }
-    }
-    #startBtn, #restartBtn {
-        padding: 18px 35px; font-size: 28px; cursor: pointer;
-        background: #4CAF50; color: white; border: none; border-radius: 10px;
-        transition: background 0.3s, transform 0.1s; margin-top: 20px;
-        box-shadow: 0 5px #999;
-    }
-    #startBtn:hover, #restartBtn:hover { background: #45a049; }
-    #startBtn:active, #restartBtn:active {
-        background-color: #3e8e41; box-shadow: 0 2px #666; transform: translateY(4px);
-    }
-    #instructions { margin-top: 30px; color: #ccc; line-height: 1.6; }
-    #finalScore { font-size: 36px; margin-bottom: 20px; color: yellow; }
-    .sword {
-        width: 50px; height: 150px; background: linear-gradient(#ddd, #aaa);
-        position: absolute; top: 20%; animation: swing 2.5s infinite alternate ease-in-out;
-        border-radius: 10px; border: 1px solid #777;
-    }
-    .sword::after {
-        content: ''; width: 15px; height: 30px; background: #553322;
-        position: absolute; bottom: -30px; left: 17.5px; border-radius: 5px;
-    }
-    @keyframes swing {
-        from { transform: rotate(-35deg) translateY(0); }
-        to { transform: rotate(35deg) translateY(30px); }
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>about:DODGE</title>
+    <style>
+        /* --- CSS (Mostly Unchanged) --- */
+        * { box-sizing: border-box; }
+        body { margin: 0; overflow: hidden; background: #111; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
+        canvas { display: block; margin: auto; background: #222; }
+        #uiOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; display: none; flex-direction: column; justify-content: space-between; align-items: center; padding: 15px; }
+        #topUI { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        #gameInfo { display: flex; align-items: center; gap: 20px; }
+        #score, #levelDisplay, #coinDisplay { font-size: 24px; }
+        #coinDisplay { color: gold; }
+        #statusIndicators { display: flex; flex-direction: column; align-items: flex-end; gap: 5px;}
+        .cooldownContainer { display: flex; align-items: center; gap: 8px; }
+        .cooldownLabel { font-size: 14px; color: #ccc; width: 70px; text-align: right;}
+        .cooldownBar { width: 150px; height: 18px; background: rgba(255,255,255,0.1); border: 2px solid white; position: relative; }
+        .cooldownFill { position: absolute; top: 0; left: 0; height: 100%; background: cyan; width: 0%; transition: width 0.1s linear; }
+        #abilityCooldownBar .cooldownFill { background: lime; }
+        #downedTimerBar { position: absolute; width: 100px; height: 10px; background: rgba(255, 0, 0, 0.2); border: 1px solid red; display: none; z-index: 6; }
+        #downedTimerFill { height: 100%; background: red; width: 100%; }
+
+        /* --- Menus --- */
+        .menuScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.9); z-index: 10; text-align: center; padding: 20px; }
+        #menu { display: flex; }
+        #gameOver, #shopMenu, #secretCodePopup { display: none; }
+        #title { font-size: 64px; font-weight: bold; margin-bottom: 40px; animation: glow 1.5s ease-in-out infinite alternate; color: #eee; }
+        @keyframes glow { from { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px cyan; } to { text-shadow: 0 0 20px #fff, 0 0 30px cyan, 0 0 40px cyan; } }
+        .menuButton { padding: 15px 30px; font-size: 24px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 8px; transition: background 0.3s, transform 0.1s; margin-top: 15px; box-shadow: 0 4px #999; min-width: 180px; }
+        .menuButton:hover { background: #45a049; }
+        .menuButton:active { background-color: #3e8e41; box-shadow: 0 2px #666; transform: translateY(3px); }
+        .secondaryButton { background-color: #007bff; }
+        .secondaryButton:hover { background-color: #0056b3; }
+        .secondaryButton:active { background-color: #004085; }
+        #instructions { margin-top: 30px; color: #ccc; line-height: 1.6; }
+        #finalScore, #finalLevel { font-size: 36px; margin-bottom: 10px; color: yellow; }
+        #finalCoins { font-size: 24px; color: gold; margin-bottom: 20px; }
+
+        /* --- Shop Styles --- */
+        #shopMenu h2 { margin-bottom: 10px; font-size: 36px; position: relative; }
+        #shopCoinDisplay { font-size: 24px; color: gold; margin-bottom: 20px; }
+        #abilityList { list-style: none; padding: 0; max-height: 60vh; overflow-y: auto; width: 80%; max-width: 600px; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; margin-bottom: 20px;}
+        #abilityList li { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #444; }
+        #abilityList li:last-child { border-bottom: none; }
+        .abilityInfo { text-align: left; }
+        .abilityInfo h3 { margin: 0 0 5px 0; font-size: 18px; color: #eee;}
+        .abilityInfo p { margin: 0; font-size: 14px; color: #bbb;}
+        .abilityActions button { padding: 8px 15px; font-size: 14px; cursor: pointer; margin-left: 10px; border: none; border-radius: 5px; transition: background 0.3s; }
+        .buyBtn { background-color: #28a745; color: white; }
+        .buyBtn:hover { background-color: #218838; }
+        .equipBtn { background-color: #ffc107; color: #333; }
+        .equipBtn:hover { background-color: #e0a800; }
+        .equippedBtn { background-color: #6c757d; color: white; cursor: default; }
+        .buyBtn:disabled { background-color: #555; color: #aaa; cursor: not-allowed; }
+        #equippedAbilityDisplay { font-size: 16px; color: #bbb; margin-top: 5px; }
+        #secretCodeLock { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 28px; cursor: pointer; user-select: none; transition: transform 0.2s; }
+        #secretCodeLock:hover { transform: translateY(-50%) scale(1.1); }
+
+        /* Secret Code Popup */
+        #secretCodePopup { background: rgba(0, 0, 0, 0.95); }
+        #secretCodePopup h3 { font-size: 28px; margin-bottom: 25px; }
+        #secretCodeInput { padding: 10px 15px; font-size: 20px; margin-bottom: 20px; width: 250px; text-align: center; border: 2px solid #555; background-color: #333; color: white; border-radius: 5px; }
+        #codeStatusMessage { margin-top: 15px; height: 20px; font-size: 16px; color: yellow; }
+
+        /* Level Up Indicator */
+        #levelUpIndicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; font-weight: bold; color: yellow; text-shadow: 3px 3px 5px rgba(0,0,0,0.7); z-index: 100; pointer-events: none; opacity: 0; transition: opacity 0.5s ease-out; }
+        #levelUpIndicator.visible { opacity: 1; }
+
+    </style>
 </head>
 <body>
 
-<div id="menu">
-  <div class="sword" style="left: 25%;"></div>
-  <div class="sword" style="left: 75%; animation-delay: -1.2s;"></div>
-  <div id="title">TRUE DODGE</div>
-  <button id="startBtn">PLAY</button>
-  <div id="instructions">
-    Use WASD or Mouse (Toggle with 'M') to move.<br/>
-    Right-Click to throw Boomerang.<br/>
-    If hit while Boomerang is out, it can revive you!<br/>
-    Dodge everything!
-  </div>
-</div>
-
-<div id="gameOver" style="display:none;">
-  <h1>Game Over</h1>
-  <div id="finalScore">Score: 0</div>
-  <button id="restartBtn">Restart</button>
-</div>
-
-<div id="uiOverlay">
-    <div id="topUI">
-        <div id="score">Score: 0</div>
-        <div id="movementModeIndicator">Mode: Keyboard (M to toggle)</div>
-        <div id="cooldownBar"><div id="cooldownFill"></div></div>
+    <!-- HTML Structure (Menus, UI Overlay, Canvas) - Unchanged -->
+    <div id="menu" class="menuScreen">
+        <div id="title">Dodge</div>
+        <button id="startBtn" class="menuButton">PLAY</button>
+        <button id="shopBtn" class="menuButton secondaryButton">SHOP</button>
+        <div id="instructions">
+            Use WASD or Arrow Keys to move.<br/>
+            Right-Click to throw Boomerang (Aims based on movement).<br/>
+            If hit while Boomerang is out, it can revive you!<br/>
+            Spacebar to use equipped Ability.<br/>
+	    LASTLY SHARE TO UR FRIENDS :)
+	    LASTLY SHARE TO UR FRIENDS :)
+	    LASTLY SHARE TO UR FRIENDS :)
+	    LASTLY SHARE TO UR FRIENDS :)
+	    LASTLY SHARE TO UR FRIENDS :)
+	    LASTLY SHARE TO UR FRIENDS :)
+	    LASTLY SHARE TO UR FRIENDS :)
+	    LASTLY SHARE TO UR FRIENDS :)
+        </div>
     </div>
-     <div id="downedTimerBar"><div id="downedTimerFill"></div></div>
-</div>
 
-<canvas id="gameCanvas"></canvas>
+    <div id="shopMenu" class="menuScreen">
+        <h2>
+            <span id="secretCodeLock" title="Enter Code">🔒</span>
+            Ability Shop
+        </h2>
+        <div id="shopCoinDisplay">Coins: 0</div>
+        <ul id="abilityList"></ul>
+        <button id="closeShopBtn" class="menuButton">Back to Menu</button>
+    </div>
+
+    <div id="secretCodePopup" class="menuScreen">
+        <h3>Enter Code</h3>
+        <input type="text" id="secretCodeInput" placeholder="####" maxlength="10">
+        <p id="codeStatusMessage"></p>
+        <button id="submitCodeBtn" class="menuButton">Enter</button>
+        <button id="closeCodePopupBtn" class="menuButton secondaryButton">Close</button>
+    </div>
+
+    <div id="gameOver" class="menuScreen">
+        <h1>Game Over</h1>
+        <div id="finalScore">Score: 0</div>
+        <div id="finalLevel">Level: 1</div>
+        <div id="finalCoins">Coins This Game: 0</div>
+        <button id="restartBtn" class="menuButton">Restart</button>
+        <button id="mainMenuBtn" class="menuButton secondaryButton">Main Menu</button>
+    </div>
+
+    <div id="uiOverlay">
+        <div id="topUI">
+            <div id="gameInfo">
+                <div id="score">Score: 0</div>
+                <div id="levelDisplay">Level: 1</div>
+                <div id="coinDisplay">Total Coins: 0</div>
+            </div>
+            <div id="statusIndicators">
+                 <div id="equippedAbilityDisplay">Ability: None</div>
+                 <div class="cooldownContainer">
+                    <span class="cooldownLabel">Boomerang:</span>
+                    <div id="boomerangCooldownBar" class="cooldownBar"><div class="cooldownFill"></div></div>
+                 </div>
+                 <div class="cooldownContainer">
+                     <span class="cooldownLabel">Ability:</span>
+                     <div id="abilityCooldownBar" class="cooldownBar"><div class="cooldownFill"></div></div>
+                 </div>
+            </div>
+        </div>
+         <div id="downedTimerBar"><div id="downedTimerFill"></div></div>
+    </div>
+
+    <div id="levelUpIndicator">Level 1</div>
+
+    <canvas id="gameCanvas"></canvas>
+
 
 <script>
-  // --- Get DOM Elements ---
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas?.getContext('2d');
-  const menu = document.getElementById('menu');
-  const gameOverScreen = document.getElementById('gameOver');
-  const startBtn = document.getElementById('startBtn');
-  const restartBtn = document.getElementById('restartBtn');
-  const uiOverlay = document.getElementById('uiOverlay');
-  const cooldownBar = document.getElementById('cooldownBar');
-  const cooldownFill = document.getElementById('cooldownFill');
-  const scoreDisplay = document.getElementById('score');
-  const finalScoreDisplay = document.getElementById('finalScore');
-  const movementModeIndicator = document.getElementById('movementModeIndicator');
-  const downedTimerBar = document.getElementById('downedTimerBar');
-  const downedTimerFill = document.getElementById('downedTimerFill');
-  console.log("Script Start: All DOM elements potentially retrieved.");
+(function() { // <<< Start IIFE
 
-  // --- Constants ---
-  const PLAYER_STATE = { ALIVE: 'alive', DOWNED: 'downed', DEAD: 'dead' };
-  const BOOMERANG_COOLDOWN = 6000;
-  const BOOMERANG_SPEED = 7;
-  const BOOMERANG_RANGE = 350;
-  const BOOMERANG_SIZE = 10;
-  const DOWNED_DURATION = 7000;
-  const BASE_SPAWN_RATES = {
-      ball: 2000, lava: 3500, blade: 6000, zone: 8000, missile: 7000, laser: 10000, shield: 15000
-  };
+    // --- Get DOM Elements ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas?.getContext('2d');
+    const menu = document.getElementById('menu');
+    const gameOverScreen = document.getElementById('gameOver');
+    const shopMenu = document.getElementById('shopMenu');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const shopBtn = document.getElementById('shopBtn');
+    const closeShopBtn = document.getElementById('closeShopBtn');
+    const mainMenuBtn = document.getElementById('mainMenuBtn');
+    const uiOverlay = document.getElementById('uiOverlay');
+    const boomerangCooldownBar = document.getElementById('boomerangCooldownBar');
+    const boomerangCooldownFill = boomerangCooldownBar?.querySelector('.cooldownFill');
+    const abilityCooldownBar = document.getElementById('abilityCooldownBar');
+    const abilityCooldownFill = abilityCooldownBar?.querySelector('.cooldownFill');
+    const scoreDisplay = document.getElementById('score');
+    const finalScoreDisplay = document.getElementById('finalScore');
+    const levelDisplay = document.getElementById('levelDisplay');
+    const finalLevelDisplay = document.getElementById('finalLevel');
+    const finalCoinsDisplay = document.getElementById('finalCoins');
+    const coinDisplay = document.getElementById('coinDisplay');
+    const shopCoinDisplay = document.getElementById('shopCoinDisplay');
+    const abilityList = document.getElementById('abilityList');
+    const downedTimerBar = document.getElementById('downedTimerBar');
+    const downedTimerFill = downedTimerBar?.querySelector('#downedTimerFill');
+    const equippedAbilityDisplay = document.getElementById('equippedAbilityDisplay');
+    const levelUpIndicator = document.getElementById('levelUpIndicator');
+    const secretCodeLock = document.getElementById('secretCodeLock');
+    const secretCodePopup = document.getElementById('secretCodePopup');
+    const secretCodeInput = document.getElementById('secretCodeInput');
+    const submitCodeBtn = document.getElementById('submitCodeBtn');
+    const closeCodePopupBtn = document.getElementById('closeCodePopupBtn');
+    const codeStatusMessage = document.getElementById('codeStatusMessage');
+    console.log("Script Start: DOM elements retrieved.");
 
-  // --- Game State Variables ---
-  let gameRunning = false;
-  let score = 0;
-  let startTime = 0;
-  let movementMode = 'keyboard';
-  let lastFrameTime = 0;
-  let gameTime = 0;
-  let lastDifficultyUpdateTime = -1;
-  let difficultyMultiplier = 1;
-  let boomerang = null;
-  let lastBoomerangTime = -BOOMERANG_COOLDOWN;
-  let downedStartTime = 0;
-  const keys = {};
-  // FIX: Include shields in the obstacles object
-  const obstacles = {
-    balls: [], lavaBlocks: [], blades: [], electricZones: [], homingMissiles: [], laserBeams: [],
-    shields: [] // <<< SHIELDS ADDED HERE
-  };
-  const particles = [];
-  const spawnTimers = {};
-  let canvasWidth, canvasHeight;
+    // --- Constants ---
+    const PLAYER_STATE = { ALIVE: 'alive', DOWNED: 'downed', DEAD: 'dead', GHOST: 'ghost', DASHING: 'dashing' };
+    const BOOMERANG_COOLDOWN = 5500;
+    const BOOMERANG_SPEED = 5.5;
+    const BOOMERANG_RETURN_ACCEL = 0.2;
+    const BOOMERANG_RANGE = 300;
+    const BOOMERANG_SIZE = 10;
+    const DOWNED_DURATION = 7000;
+    const LEVEL_SCORE_THRESHOLD = 120;
+    const COINS_PER_LEVEL = 5;
+    const BASE_SPAWN_RATES = { ball: 2400, lava: 4000, zone: 8000, shield: 16000, dasher: 6500, spawnerBall: 13000 };
+    const ABILITY_KEY = 'Space';
+    const LEVEL_UP_DISPLAY_DURATION = 2500;
+    const SECRET_CODE = "1191";
+    const SECRET_CODE_REWARD = 1000000;
 
-  // --- Player Object ---
-  const player = {
-    x: 0, y: 0, size: 15, speed: 4, state: PLAYER_STATE.ALIVE,
-    color: 'white', shielded: false, shieldTimer: 0, shieldDuration: 5000
-  };
-  const target = { x: 0, y: 0 };
-  console.log("Script Start: Player and Target objects created.");
+    // --- Ability Definitions ---
+    const abilitiesData = {
+        pulseShield: { id: 'pulseShield', name: "Pulse Shield", description: "Emit a shockwave, pushing enemies back.", cost: 75, cooldown: 10000, purchased: false, radius: 150, force: 5 },
+        timeSlow: { id: 'timeSlow', name: "Time Slow", description: "Briefly slow down all obstacles.", cost: 100, cooldown: 18000, purchased: false, duration: 3000, slowFactor: 0.4 },
+        homingMine: { id: 'homingMine', name: "Homing Mine", description: "Deploy a mine that seeks the nearest enemy.", cost: 60, cooldown: 9000, purchased: false, mineLife: 6000, mineSpeed: 3, explosionRadius: 40, size: 12 },
+        chainLightning: { id: 'chainLightning', name: "Chain Lightning", description: "Zap up to 3 nearby enemies.", cost: 120, cooldown: 14000, purchased: false, range: 250, maxTargets: 3, damage: 1 },
+        repulsionField: { id: 'repulsionField', name: "Repulsion Field", description: "Create a field that slowly pushes enemies away.", cost: 85, cooldown: 15000, purchased: false, duration: 5000, radius: 100, force: 0.3 },
+        ghostForm: { id: 'ghostForm', name: "Ghost Form", description: "Become invulnerable and pass through enemies.", cost: 150, cooldown: 25000, purchased: false, duration: 3000 },
+        freezeNova: { id: 'freezeNova', name: "Freeze Nova", description: "Emit a wave that briefly freezes nearby enemies.", cost: 110, cooldown: 16000, purchased: false, radius: 170, duration: 2000 },
+        emergencyShield: { id: 'emergencyShield', name: "Emergency Shield", description: "Instantly gain a temporary shield.", cost: 90, cooldown: 22000, purchased: false, duration: 4000 },
+        megaPulseShield: { id: 'megaPulseShield', name: "Mega Pulse Shield", description: "Larger radius, stronger push, longer cooldown.", cost: 180, cooldown: 18000, purchased: false, radius: 220, force: 8 },
+        temporalWarp: { id: 'temporalWarp', name: "Temporal Warp", description: "Massively slows time, but shorter duration.", cost: 200, cooldown: 25000, purchased: false, duration: 1500, slowFactor: 0.1 },
+        clusterMine: { id: 'clusterMine', name: "Cluster Mine", description: "Mine explodes into 3 smaller seeking mines.", cost: 150, cooldown: 15000, purchased: false, mineLife: 4000, mineSpeed: 2.5, size: 14, subMines: 3, subMineLife: 3000, subMineSpeed: 3.5, subMineSize: 8 },
+        lightningStorm: { id: 'lightningStorm', name: "Lightning Storm", description: "Calls down random lightning strikes nearby.", cost: 250, cooldown: 20000, purchased: false, duration: 4000, strikeRadius: 250, strikesPerSecond: 3, strikeDamageRadius: 15 },
+        singularityField: { id: 'singularityField', name: "Singularity Field", description: "Pulls enemies towards you slowly.", cost: 190, cooldown: 22000, purchased: false, duration: 6000, radius: 150, force: -0.25 },
+        etherealShift: { id: 'etherealShift', name: "Ethereal Shift", description: "Longer Ghost Form, slightly slower movement.", cost: 280, cooldown: 35000, purchased: false, duration: 5000, speedPenalty: 0.8 },
+        absoluteZero: { id: 'absoluteZero', name: "Absolute Zero", description: "Wider, longer freeze, but very long cooldown.", cost: 220, cooldown: 30000, purchased: false, radius: 250, duration: 3000 },
+        guardianShield: { id: 'guardianShield', name: "Guardian Shield", description: "Longer lasting emergency shield.", cost: 175, cooldown: 28000, purchased: false, duration: 7000 },
+        cooldownRefresh: { id: 'cooldownRefresh', name: "Cooldown Refresh", description: "Instantly resets Boomerang cooldown.", cost: 100, cooldown: 30000, purchased: false },
+        phaseDash: { id: 'phaseDash', name: "Phase Dash", description: "Short, quick invulnerable dash.", cost: 130, cooldown: 8000, purchased: false, distance: 180, duration: 200 },
+        vampiricTouch: { id: 'vampiricTouch', name: "Vampiric Touch", description: "Briefly gain coins when boomerang hits enemies.", cost: 210, cooldown: 28000, purchased: false, duration: 5000, coinsPerHit: 1 },
+        autoReviveCharm: { id: 'autoReviveCharm', name: "Auto-Revive Charm", description: "Passive: Revives you once per game if downed without boomerang.", cost: 500, cooldown: 0, purchased: false, passive: true, usedThisGame: false },
+        orbitalLaser: { id: 'orbitalLaser', name: "Orbital Laser", description: "Call down a slow moving, damaging laser beam.", cost: 350, cooldown: 40000, purchased: false },
+        decoyProjection: { id: 'decoyProjection', name: "Decoy Projection", description: "Create a temporary copy that draws some enemy fire.", cost: 160, cooldown: 25000, purchased: false },
+        blackHole: { id: 'blackHole', name: "Black Hole", description: "Create a vortex that destroys projectiles passing through.", cost: 290, cooldown: 35000, purchased: false },
+        kineticBlast: { id: 'kineticBlast', name: "Kinetic Blast", description: "Damage scales with your current movement speed.", cost: 200, cooldown: 15000, purchased: false },
+        gravityWell: { id: 'gravityWell', name: "Gravity Well", description: "Area that dramatically slows enemies inside.", cost: 180, cooldown: 20000, purchased: false },
+        overcharge: { id: 'overcharge', name: "Overcharge", description: "Next ability used has no cooldown (one time).", cost: 400, cooldown: 60000, purchased: false },
+        reflectBarrier: { id: 'reflectBarrier', name: "Reflect Barrier", description: "Temporary barrier that reflects basic projectiles.", cost: 260, cooldown: 30000, purchased: false },
+        enemyStun: { id: 'enemyStun', name: "Enemy Stun", description: "Briefly stuns all enemies on screen.", cost: 230, cooldown: 26000, purchased: false },
+        bonusMultiplier: { id: 'bonusMultiplier', name: "Bonus Multiplier", description: "Briefly doubles score gain.", cost: 150, cooldown: 45000, purchased: false },
+        hasteField: { id: 'hasteField', name: "Haste Field", description: "Create a field that speeds up your movement inside.", cost: 140, cooldown: 18000, purchased: false }
+    };
+    let equippedAbilityKey = null;
+    let lastAbilityUseTime = -Infinity;
+    let abilityActiveStates = { timeSlowTimer: 0, timeSlowActive: false, repulsionFieldTimer: 0, repulsionFieldActive: false, ghostFormTimer: 0, freezeNovaActiveEnemies: [], etherealShiftActive: false, singularityFieldTimer: 0, singularityFieldActive: false, lightningStormTimer: 0, lightningStormActive: false, nextLightningStrike: 0, phaseDashTimer: 0, phaseDashVx: 0, phaseDashVy: 0, vampiricTouchTimer: 0, vampiricTouchActive: false };
 
-  // --- Core Functions ---
+    // --- Game State Variables ---
+    let gameRunning = false;
+    let score = 0;
+    let currentLevel = 1;
+    let startTime = 0;
+    let lastFrameTime = 0;
+    let gameTime = 0;
+    let coinsCollectedThisGame = 0;
+    let boomerang = null;
+    let lastBoomerangTime = -BOOMERANG_COOLDOWN;
+    let downedStartTime = 0;
+    const keys = {};
+    let lastMoveDir = { x: 1, y: 0 };
+    let currentKeyboardInput = { dx: 0, dy: 0 };
+    const obstacles = { balls: [], lavaBlocks: [], electricZones: [], shields: [], dashers: [], spawnerBalls: [], miniBalls: [], homingMines: [], clusterMines: [], lightningBolts: [], lightningStrikes: [] };
+    const particles = [];
+    const spawnTimers = { ball: null, lava: null, zone: null, shield: null, dasher: null, spawnerBall: null };
+    let canvasWidth, canvasHeight;
+    let levelUpDisplayTimeout = null;
 
-  function resizeCanvas() {
-      if (!canvas) return;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      canvasWidth = canvas.width;
-      canvasHeight = canvas.height;
-      if (player) {
-         if (!gameRunning) {
-             player.x = canvasWidth / 2;
-             player.y = canvasHeight / 2;
-         } else {
-             player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x));
-             player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y));
-         }
-         if(target){ target.x = player.x; target.y = player.y; }
-      }
-  }
+    // --- Player Object ---
+    const player = { x: 0, y: 0, size: 15, speed: 3.2, state: PLAYER_STATE.ALIVE, color: 'white', shielded: false, shieldTimer: 0, shieldDuration: 5000, coins: 0 };
 
-  function startGame() {
-      console.log("--- startGame: Initiated ---");
-      if (!menu || !gameOverScreen || !uiOverlay || !startBtn || !canvas || !ctx) {
-          console.error("startGame Error: Essential elements missing!"); return;
-      }
+    // --- LocalStorage Functions ---
+    function loadGameData() { const storedCoins = localStorage.getItem('playerCoins'); player.coins = parseInt(storedCoins || '0'); equippedAbilityKey = localStorage.getItem('equippedAbility') || null; for (const key in abilitiesData) { const purchased = localStorage.getItem(`purchased_${key}`); if (purchased !== null) { abilitiesData[key].purchased = purchased === 'true'; } else { abilitiesData[key].purchased = false; } if (abilitiesData[key].passive) abilitiesData[key].usedThisGame = false; } console.log("Game data loaded."); updateShopUI(); updateEquippedAbilityUI(); updateCoinDisplays(); }
+    function saveGameData() { localStorage.setItem('playerCoins', player.coins.toString()); if (equippedAbilityKey) { localStorage.setItem('equippedAbility', equippedAbilityKey); } else { localStorage.removeItem('equippedAbility'); } for (const key in abilitiesData) { localStorage.setItem(`purchased_${key}`, abilitiesData[key].purchased.toString()); } console.log(`Game data saved.`); }
 
-      try {
-          menu.style.display = 'none';
-          gameOverScreen.style.display = 'none';
-          uiOverlay.style.display = 'flex';
-      } catch (e) { console.error("startGame UI style error:", e); return; }
+    // --- Core Functions ---
+    function resizeCanvas() { if (!canvas) return; canvas.width = window.innerWidth; canvas.height = window.innerHeight; canvasWidth = canvas.width; canvasHeight = canvas.height; if (player) { if (!gameRunning) { player.x = canvasWidth / 2; player.y = canvasHeight / 2; } else { player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x)); player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y)); } } }
+    function showScreen(screenId) { menu.style.display = 'none'; gameOverScreen.style.display = 'none'; shopMenu.style.display = 'none'; uiOverlay.style.display = 'none'; secretCodePopup.style.display = 'none'; const screen = document.getElementById(screenId); if (screen) { screen.style.display = 'flex'; } if (screenId === 'uiOverlay') { uiOverlay.style.display = 'flex'; } }
 
-      try {
+    function startGame() {
+        console.log("--- startGame: Initiated ---");
+        if (!canvas || !ctx) { console.error("startGame Error: Canvas/Context missing!"); return; }
+        showScreen('uiOverlay');
         gameRunning = true;
-        score = 0; gameTime = 0; difficultyMultiplier = 1; lastDifficultyUpdateTime = -1;
+        score = 0; gameTime = 0; currentLevel = 1; coinsCollectedThisGame = 0;
         startTime = Date.now(); lastFrameTime = performance.now();
         player.state = PLAYER_STATE.ALIVE; player.shielded = false; player.shieldTimer = 0; player.color = 'white';
-        resizeCanvas(); // Position player correctly for start
-
-        boomerang = null; lastBoomerangTime = -BOOMERANG_COOLDOWN;
-        if(cooldownFill) cooldownFill.style.width = '100%';
-        if(downedTimerBar) downedTimerBar.style.display = 'none';
-
-        // FIX: This loop now correctly clears the shields array within obstacles
-        for (const key in obstacles) { obstacles[key] = []; }
-        particles.length = 0;
+        lastMoveDir = { x: 1, y: 0 }; currentKeyboardInput = {dx: 0, dy: 0};
+        resizeCanvas();
+        boomerang = null; lastBoomerangTime = -BOOMERANG_COOLDOWN; lastAbilityUseTime = -Infinity;
+        abilityActiveStates = { timeSlowTimer: 0, timeSlowActive: false, repulsionFieldTimer: 0, repulsionFieldActive: false, ghostFormTimer: 0, freezeNovaActiveEnemies: [], etherealShiftActive: false, singularityFieldTimer: 0, singularityFieldActive: false, lightningStormTimer: 0, lightningStormActive: false, nextLightningStrike: 0, phaseDashTimer: 0, phaseDashVx: 0, phaseDashVy: 0, vampiricTouchTimer: 0, vampiricTouchActive: false };
+        if(abilitiesData.autoReviveCharm) abilitiesData.autoReviveCharm.usedThisGame = false;
+        if (boomerangCooldownFill) boomerangCooldownFill.style.width = '100%'; if (abilityCooldownFill) abilityCooldownFill.style.width = '100%';
+        if (downedTimerBar) downedTimerBar.style.display = 'none'; if (levelDisplay) levelDisplay.textContent = `Level: ${currentLevel}`;
+        if (coinDisplay) coinDisplay.textContent = `Total Coins: ${player.coins.toLocaleString()}`;
+        updateEquippedAbilityUI(); hideLevelUpIndicator();
+        for (const key in obstacles) { obstacles[key] = []; } particles.length = 0;
         console.log("startGame: Game state variables reset.");
+        setLevelDifficulty(); setupSpawners(); requestAnimationFrame(gameLoop);
+        console.log("--- startGame: Finished successfully, loop requested. ---");
+    }
 
-      } catch (e) { console.error("startGame State reset error:", e); gameRunning = false; return; }
+    function gameOver() { console.log(`gameOver called. Final Score: ${score}, Level: ${currentLevel}, Coins this game: ${coinsCollectedThisGame}`); gameRunning = false; player.state = PLAYER_STATE.DEAD; clearAllSpawnTimers(); saveGameData(); console.log(`gameOver: saveGameData called. Final total player.coins = ${player.coins}`); if (finalScoreDisplay) finalScoreDisplay.textContent = `Score: ${score}`; if (finalLevelDisplay) finalLevelDisplay.textContent = `Level: ${currentLevel}`; if (finalCoinsDisplay) finalCoinsDisplay.textContent = `Coins This Game: ${coinsCollectedThisGame}`; if (shopCoinDisplay) shopCoinDisplay.textContent = `Coins: ${player.coins.toLocaleString()}`; showScreen('gameOver'); }
+    function clearAllSpawnTimers() { for(const key in spawnTimers) { if (spawnTimers[key]) { clearInterval(spawnTimers[key]); spawnTimers[key] = null; } } console.log("All spawn timers cleared."); }
 
-      try {
-        console.log("startGame: Setting up spawners...");
-        clearAllSpawnTimers();
-        setupSpawners();
-      } catch (e) { console.error("startGame Spawner error:", e); gameRunning = false; return; }
+    // --- Difficulty and Level Management ---
+    function setLevelDifficulty() { console.log(`Setting difficulty for Level ${currentLevel}`); const fasterSpawnFactor = Math.pow(0.88, currentLevel - 1); const slowerSpawnFactor = Math.pow(1.06, currentLevel - 1); currentSpawnRates = { ball: Math.max(350, BASE_SPAWN_RATES.ball * fasterSpawnFactor), lava: Math.max(600, BASE_SPAWN_RATES.lava * fasterSpawnFactor), zone: Math.max(1000, BASE_SPAWN_RATES.zone * fasterSpawnFactor * 0.85), shield: Math.max(9000, BASE_SPAWN_RATES.shield * slowerSpawnFactor), dasher: currentLevel >= 2 ? Math.max(700, BASE_SPAWN_RATES.dasher * fasterSpawnFactor) : null, spawnerBall: currentLevel >= 3 ? Math.max(2200, BASE_SPAWN_RATES.spawnerBall * fasterSpawnFactor) : null, }; console.log("Calculated Spawn Rates:", currentSpawnRates); }
+    function setupSpawners() { clearAllSpawnTimers(); console.log("Setting up spawners with current rates:", currentSpawnRates); for(const type in currentSpawnRates) { const interval = currentSpawnRates[type]; if (interval !== null && interval > 0) { let addFunction; switch(type) { case 'ball': addFunction = addBall; break; case 'lava': addFunction = addLavaBlock; break; case 'zone': addFunction = addElectricZone; break; case 'shield': addFunction = addShieldPowerup; break; case 'dasher': addFunction = addDasher; break; case 'spawnerBall': addFunction = addSpawnerBall; break; default: continue; } spawnTimers[type] = setInterval(addFunction, interval); } else if (interval !== null) { console.warn(`Spawner interval for ${type} is zero or negative, not setting.`); } } }
+    function checkLevelUp() { if (score >= currentLevel * LEVEL_SCORE_THRESHOLD) { currentLevel++; player.coins += COINS_PER_LEVEL; coinsCollectedThisGame += COINS_PER_LEVEL; console.log(`--- LEVEL UP! Reached Level ${currentLevel}. Awarded ${COINS_PER_LEVEL} coins. Total: ${player.coins} ---`); if(levelDisplay) levelDisplay.textContent = `Level: ${currentLevel}`; updateCoinDisplays(); showLevelUpIndicator(); clearEnemiesAndProjectiles(); setTimeout(() => { setLevelDifficulty(); setupSpawners(); }, 500); } }
+    function showLevelUpIndicator() { if (!levelUpIndicator) return; levelUpIndicator.textContent = `Level ${currentLevel}!`; levelUpIndicator.classList.add('visible'); if (levelUpDisplayTimeout) clearTimeout(levelUpDisplayTimeout); levelUpDisplayTimeout = setTimeout(hideLevelUpIndicator, LEVEL_UP_DISPLAY_DURATION); }
+    function hideLevelUpIndicator() { if (!levelUpIndicator) return; levelUpIndicator.classList.remove('visible'); levelUpDisplayTimeout = null; }
+    function clearEnemiesAndProjectiles() { console.log("Clearing enemies for level up..."); obstacles.balls = []; obstacles.lavaBlocks = []; obstacles.electricZones = []; obstacles.dashers = []; obstacles.spawnerBalls = []; obstacles.miniBalls = []; obstacles.homingMines = []; obstacles.clusterMines = []; obstacles.lightningBolts = []; obstacles.lightningStrikes = []; unfreezeAllEnemies(); }
 
-      try {
-          console.log("startGame: Requesting first animation frame...");
-          requestAnimationFrame(gameLoop);
-          console.log("--- startGame: Finished successfully, loop requested. ---");
-      } catch (e) { console.error("startGame RAF error:", e); gameRunning = false; }
-  } // End of startGame
+    // --- Update Functions ---
+    function update(dt) { if (player.state === PLAYER_STATE.DEAD) return; gameTime += dt * 1000; if (player.state !== PLAYER_STATE.DOWNED) { score = Math.floor(gameTime / 100); if(scoreDisplay) scoreDisplay.textContent = `Score: ${score}`; checkLevelUp(); } updatePlayer(dt); updateBoomerang(dt); updateAbilities(dt); updateObstacles(dt); updateParticles(dt); checkCollisions(); updateCooldownAndTimers(); if (player.state === PLAYER_STATE.DOWNED) { const elapsedDowned = Date.now() - downedStartTime; if (elapsedDowned >= DOWNED_DURATION) { createExplosion(player.x, player.y, 'white', 30); gameOver(); } else { const remainingRatio = 1 - (elapsedDowned / DOWNED_DURATION); if (downedTimerFill) downedTimerFill.style.width = `${Math.max(0, remainingRatio * 100)}%`; if (downedTimerBar) { downedTimerBar.style.left = `${player.x - downedTimerBar.offsetWidth / 2}px`; downedTimerBar.style.top = `${player.y + player.size + 10}px`; downedTimerBar.style.bottom = 'auto'; } } } else { if (downedTimerBar && downedTimerBar.style.display !== 'none') { downedTimerBar.style.display = 'none'; } } }
+    function updatePlayer(dt) { if (player.state === PLAYER_STATE.DEAD) return; if (abilityActiveStates.phaseDashTimer > 0) { player.state = PLAYER_STATE.DASHING; player.color = 'rgba(180, 180, 255, 0.6)'; player.x += abilityActiveStates.phaseDashVx * dt; player.y += abilityActiveStates.phaseDashVy * dt; abilityActiveStates.phaseDashTimer -= dt * 1000; if (abilityActiveStates.phaseDashTimer <= 0) { player.state = PLAYER_STATE.ALIVE; } player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x)); player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y)); return; } if (abilityActiveStates.ghostFormTimer > 0) { abilityActiveStates.ghostFormTimer -= dt * 1000; player.state = PLAYER_STATE.GHOST; player.color = 'rgba(200, 200, 255, 0.5)'; if (abilityActiveStates.ghostFormTimer <= 0) { player.state = PLAYER_STATE.ALIVE; abilityActiveStates.etherealShiftActive = false; } } else if (player.state === PLAYER_STATE.GHOST) { player.state = PLAYER_STATE.ALIVE; abilityActiveStates.etherealShiftActive = false; } if (player.state === PLAYER_STATE.ALIVE || player.state === PLAYER_STATE.GHOST) { let currentSpeed = player.speed; if (abilityActiveStates.etherealShiftActive && player.state === PLAYER_STATE.GHOST) { currentSpeed *= abilitiesData.etherealShift.speedPenalty; } updateKeyboardMovement(dt, currentSpeed); player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x)); player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y)); } if (player.shielded) { player.shieldTimer -= dt * 1000; if (player.shieldTimer <= 0) { player.shielded = false; player.shieldTimer = 0; } } if (player.state !== PLAYER_STATE.GHOST && player.state !== PLAYER_STATE.DASHING) { if (player.state === PLAYER_STATE.DOWNED) { player.color = '#888'; } else if (player.shielded) { const shieldPulse = Math.abs(Math.sin(Date.now() * 0.01)); player.color = `rgba(0, 255, 255, ${0.5 + shieldPulse * 0.5})`; } else { player.color = 'white'; } } }
+    function updateKeyboardMovement(dt, speed) { let dx = 0; let dy = 0; if (keys['w'] || keys['arrowup']) dy -= 1; if (keys['a'] || keys['arrowleft']) dx -= 1; if (keys['s'] || keys['arrowdown']) dy += 1; if (keys['d'] || keys['arrowright']) dx += 1; currentKeyboardInput.dx = dx; currentKeyboardInput.dy = dy; const len = Math.sqrt(dx * dx + dy * dy); if (len > 0) { lastMoveDir.x = dx / len; lastMoveDir.y = dy / len; dx = (dx / len) * speed; dy = (dy / len) * speed; } else { dx = 0; dy = 0; } player.x += dx; player.y += dy; }
+    function tryThrowBoomerang() { const now = Date.now(); if (!boomerang && now - lastBoomerangTime >= BOOMERANG_COOLDOWN && player.state === PLAYER_STATE.ALIVE) { const angle = Math.atan2(lastMoveDir.y, lastMoveDir.x); boomerang = { x: player.x, y: player.y, startX: player.x, startY: player.y, radius: BOOMERANG_SIZE, speed: BOOMERANG_SPEED, angle: angle, vx: Math.cos(angle) * BOOMERANG_SPEED, vy: Math.sin(angle) * BOOMERANG_SPEED, out: true, rotation: 0 }; lastBoomerangTime = now; if(boomerangCooldownFill) boomerangCooldownFill.style.width = '0%'; console.log(`Boomerang thrown`); } }
+    function updateBoomerang(dt) { if (!boomerang) { return; } boomerang.rotation += 20 * dt; const distFromStart = Math.sqrt(Math.pow(boomerang.x - boomerang.startX, 2) + Math.pow(boomerang.y - boomerang.startY, 2)); if (boomerang.out && distFromStart >= BOOMERANG_RANGE) { boomerang.out = false; } if (!boomerang.out) { const targetX = player.x; const targetY = player.y; const angleToTarget = Math.atan2(targetY - boomerang.y, targetX - boomerang.x); const accel = BOOMERANG_RETURN_ACCEL; boomerang.vx += Math.cos(angleToTarget) * accel; boomerang.vy += Math.sin(angleToTarget) * accel; const currentSpeedSq = boomerang.vx * boomerang.vx + boomerang.vy * boomerang.vy; if(currentSpeedSq > boomerang.speed * boomerang.speed) { const currentSpeed = Math.sqrt(currentSpeedSq); boomerang.vx = (boomerang.vx / currentSpeed) * boomerang.speed; boomerang.vy = (boomerang.vy / currentSpeed) * boomerang.speed; } const distToPlayer = Math.sqrt(Math.pow(targetX - boomerang.x, 2) + Math.pow(targetY - boomerang.y, 2)); if (distToPlayer < player.size + boomerang.radius) { if (player.state === PLAYER_STATE.DOWNED) { player.state = PLAYER_STATE.ALIVE; player.color = 'white'; createParticles(player.x, player.y, 'cyan', 15); if(downedTimerBar) downedTimerBar.style.display = 'none'; } boomerang = null; return; } } else { const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; let hitEnemy = false; for (const type of enemyTypes) { for (let i = obstacles[type].length - 1; i >= 0; i--) { const enemy = obstacles[type][i]; if (isEnemyFrozen(enemy)) continue; const enemySize = enemy.size || (enemy.width + enemy.height) / 2 || 10; const dx = boomerang.x - enemy.x; const dy = boomerang.y - enemy.y; if (dx * dx + dy * dy < (boomerang.radius + enemySize / 2) * (boomerang.radius + enemySize / 2)) { hitEnemy = true; createParticles(boomerang.x, boomerang.y, 'orange', 5); if(abilityActiveStates.vampiricTouchActive) { player.coins += abilitiesData.vampiricTouch.coinsPerHit; coinsCollectedThisGame += abilitiesData.vampiricTouch.coinsPerHit; updateCoinDisplays(); createParticles(enemy.x, enemy.y, 'gold', 3); } break; } } if (hitEnemy) break; } if (hitEnemy) { boomerang.out = false; } } let bounced = false; const nextX = boomerang.x + boomerang.vx; const nextY = boomerang.y + boomerang.vy; if (nextX - boomerang.radius < 0 || nextX + boomerang.radius > canvasWidth) { boomerang.vx *= -1; bounced = true; boomerang.x = Math.max(boomerang.radius, Math.min(canvasWidth - boomerang.radius, boomerang.x)); } if (nextY - boomerang.radius < 0 || nextY + boomerang.radius > canvasHeight) { boomerang.vy *= -1; bounced = true; boomerang.y = Math.max(boomerang.radius, Math.min(canvasHeight - boomerang.radius, boomerang.y)); } if (bounced && boomerang.out) { boomerang.out = false; } boomerang.x += boomerang.vx; boomerang.y += boomerang.vy; }
+    function updateAbilities(dt) { const now = Date.now(); if (abilityActiveStates.timeSlowActive) { abilityActiveStates.timeSlowTimer -= dt * 1000; if (abilityActiveStates.timeSlowTimer <= 0) { abilityActiveStates.timeSlowActive = false; console.log("Time slow ended."); } } if (abilityActiveStates.repulsionFieldActive) { abilityActiveStates.repulsionFieldTimer -= dt * 1000; if (abilityActiveStates.repulsionFieldTimer <= 0) { abilityActiveStates.repulsionFieldActive = false; console.log("Repulsion field ended."); } else { applyForceField(abilitiesData.repulsionField); if (Math.random() < 0.1) createPulseEffect(player.x, player.y, abilitiesData.repulsionField.radius, 'rgba(100,100,255,0.3)', 150); } } if (abilityActiveStates.singularityFieldActive) { abilityActiveStates.singularityFieldTimer -= dt * 1000; if (abilityActiveStates.singularityFieldTimer <= 0) { abilityActiveStates.singularityFieldActive = false; console.log("Singularity field ended."); } else { applyForceField(abilitiesData.singularityField); if (Math.random() < 0.1) createPulseEffect(player.x, player.y, abilitiesData.singularityField.radius, 'rgba(100,0,100,0.3)', 150); } } if (abilityActiveStates.lightningStormActive) { abilityActiveStates.lightningStormTimer -= dt * 1000; if (abilityActiveStates.lightningStormTimer <= 0) { abilityActiveStates.lightningStormActive = false; console.log("Lightning Storm ended."); } else { if (now >= abilityActiveStates.nextLightningStrike) { const ability = abilitiesData.lightningStorm; const angle = Math.random() * Math.PI * 2; const dist = Math.random() * ability.strikeRadius; const strikeX = player.x + Math.cos(angle) * dist; const strikeY = player.y + Math.sin(angle) * dist; spawnLightningStrike(strikeX, strikeY, ability.strikeDamageRadius); abilityActiveStates.nextLightningStrike = now + 1000 / ability.strikesPerSecond; } } } if (abilityActiveStates.vampiricTouchActive) { abilityActiveStates.vampiricTouchTimer -= dt * 1000; if (abilityActiveStates.vampiricTouchTimer <= 0) { abilityActiveStates.vampiricTouchActive = false; console.log("Vampiric Touch ended."); } } }
+    function updateObstacles(dt) { let baseSpeedMultiplier = 1 + (currentLevel - 1) * 0.07; if (abilityActiveStates.timeSlowActive) { baseSpeedMultiplier *= abilitiesData.timeSlow.slowFactor; } const processEnemy = (enemy, type) => { let currentSpeedMultiplier = baseSpeedMultiplier; let isFrozen = false; const frozenIndex = abilityActiveStates.freezeNovaActiveEnemies.findIndex(f => f.enemy === enemy); if (frozenIndex > -1) { const frozenInfo = abilityActiveStates.freezeNovaActiveEnemies[frozenIndex]; frozenInfo.timer -= dt * 1000; if (frozenInfo.timer <= 0) { abilityActiveStates.freezeNovaActiveEnemies.splice(frozenIndex, 1); } else { isFrozen = true; currentSpeedMultiplier = 0; } } const effectiveMultiplier = isFrozen ? 0 : (abilityActiveStates.timeSlowActive ? abilitiesData.timeSlow.slowFactor : 1); if (enemy.dx !== undefined) enemy.x += enemy.dx * effectiveMultiplier; if (enemy.dy !== undefined) enemy.y += enemy.dy * effectiveMultiplier; if (enemy.vx !== undefined) enemy.x += enemy.vx * effectiveMultiplier; if (enemy.vy !== undefined) enemy.y += enemy.vy * effectiveMultiplier; if (type === 'lavaBlock') { enemy.y += enemy.speed * effectiveMultiplier; return enemy.y <= canvasHeight + enemy.height; } else if (type === 'homingMine' || type === 'clusterMine') { enemy.life -= dt * 1000; if (enemy.life <= 0) { if (type === 'clusterMine') { activateClusterMineExplosion(enemy); } else { createExplosion(enemy.x, enemy.y, 'grey', 10); } return false; } if (!enemy.target) { enemy.target = findNearestEnemy(enemy.x, enemy.y, ['balls', 'miniBalls', 'dashers', 'spawnerBalls']); } if (enemy.target) { const targetObj = enemy.target.obj; const targetStillExists = obstacles[enemy.target.type].includes(targetObj); if (targetStillExists && !isEnemyFrozen(targetObj)) { const dx = targetObj.x - enemy.x; const dy = targetObj.y - enemy.y; const dist = Math.sqrt(dx*dx + dy*dy); const enemySize = targetObj.size || (targetObj.width + targetObj.height)/2 || 10; if (dist < enemySize / 2 + enemy.size / 2) { if (type === 'clusterMine') { activateClusterMineExplosion(enemy); } else { createExplosion(enemy.x, enemy.y, 'orange', abilitiesData.homingMine.explosionRadius); } const targetIndex = obstacles[enemy.target.type].indexOf(targetObj); if(targetIndex > -1) obstacles[enemy.target.type].splice(targetIndex, 1); return false; } else if (!isFrozen) { enemy.x += (dx / dist) * enemy.speed * effectiveMultiplier; enemy.y += (dy / dist) * enemy.speed * effectiveMultiplier; } } else { enemy.target = null; } } return true; } else if (type === 'ball' || type === 'miniBall' || type === 'spawnerBall') { if (enemy.x <= enemy.size / 2) { if(enemy.dx !== undefined) enemy.dx = Math.abs(enemy.dx); enemy.x = enemy.size / 2; } if (enemy.x >= canvasWidth - enemy.size / 2) { if(enemy.dx !== undefined) enemy.dx = -Math.abs(enemy.dx); enemy.x = canvasWidth - enemy.size / 2; } if (enemy.y <= enemy.size / 2) { if(enemy.dy !== undefined) enemy.dy = Math.abs(enemy.dy); enemy.y = enemy.size / 2; } if (enemy.y >= canvasHeight - enemy.size / 2) { if(enemy.dy !== undefined) enemy.dy = -Math.abs(enemy.dy); enemy.y = canvasHeight - enemy.size / 2; } if (type === 'miniBall') enemy.life -= dt * 1000; return !(enemy.x < -enemy.size * 2 || enemy.x > canvasWidth + enemy.size * 2 || enemy.y < -enemy.size * 2 || enemy.y > canvasHeight + enemy.size * 2) && (type !== 'miniBall' || enemy.life > 0); } else if (type === 'dasher') { return !(enemy.x < -enemy.width * 2 || enemy.x > canvasWidth + enemy.width * 2 || enemy.y < -enemy.height * 2 || enemy.y > canvasHeight + enemy.height * 2); } if (type === 'spawnerBall') { const effectiveTimerDt = dt * 1000 * effectiveMultiplier; enemy.spawnTimer += effectiveTimerDt; if (enemy.spawnTimer >= enemy.spawnInterval) { enemy.spawnTimer = 0; addMiniBall(enemy.x, enemy.y); } } return true; }; obstacles.balls = obstacles.balls.filter(e => processEnemy(e, 'ball')); obstacles.miniBalls = obstacles.miniBalls.filter(e => processEnemy(e, 'miniBall')); obstacles.lavaBlocks = obstacles.lavaBlocks.filter(e => processEnemy(e, 'lavaBlock')); obstacles.dashers = obstacles.dashers.filter(e => processEnemy(e, 'dasher')); obstacles.spawnerBalls = obstacles.spawnerBalls.filter(e => processEnemy(e, 'spawnerBall')); obstacles.homingMines = obstacles.homingMines.filter(e => processEnemy(e, 'homingMine')); obstacles.clusterMines = obstacles.clusterMines.filter(e => processEnemy(e, 'clusterMine')); obstacles.electricZones.forEach(zone => { zone.timer += dt * 1000 * (abilityActiveStates.timeSlowActive ? abilitiesData.timeSlow.slowFactor : 1); if (zone.timer >= zone.interval) { zone.active = !zone.active; zone.timer = 0; const onDurationMultiplier = 1 / (1 + (currentLevel - 1) * 0.1); const offDurationMultiplier = 1 / (1 + (currentLevel - 1) * 0.05); zone.interval = zone.active ? zone.baseOnDuration * onDurationMultiplier : zone.baseOffDuration * offDurationMultiplier; } }); obstacles.shields = obstacles.shields.filter((shield) => { shield.y += 1 * (abilityActiveStates.timeSlowActive ? abilitiesData.timeSlow.slowFactor : 1); shield.bobOffset = (shield.bobOffset || 0) + dt * 3; shield.displayY = shield.y + Math.sin(shield.bobOffset + shield.x) * 3; return shield.y <= canvasHeight + shield.size; }); obstacles.lightningBolts = obstacles.lightningBolts.filter(bolt => { bolt.life -= dt * 1000; return bolt.life > 0; }); obstacles.lightningStrikes = obstacles.lightningStrikes.filter(strike => { strike.life -= dt * 1000; if(strike.life > strike.maxLife * 0.8 && !strike.damaged) { checkLightningStrikeDamage(strike); strike.damaged = true; } return strike.life > 0; }); }
+    function updateParticles(dt) { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; if (p.isPulse && p.update) { p.update(dt); } else { p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.vy += 0.1 * dt * 60; } p.life -= dt * 1000; p.alpha = Math.max(0, p.life / p.maxLife); if (p.life <= 0) { particles.splice(i, 1); } } }
+    function updateCooldownAndTimers() { if (!boomerang) { const elapsed = Date.now() - lastBoomerangTime; const cooldownProgress = Math.min(1, elapsed / BOOMERANG_COOLDOWN); const newWidth = `${cooldownProgress * 100}%`; if (boomerangCooldownFill && boomerangCooldownFill.style.width !== newWidth) { boomerangCooldownFill.style.width = newWidth; } } else { if (boomerangCooldownFill && boomerangCooldownFill.style.width !== '0%') { boomerangCooldownFill.style.width = '0%'; } } if (equippedAbilityKey) { const ability = abilitiesData[equippedAbilityKey]; if (ability && ability.cooldown > 0) { const elapsed = Date.now() - lastAbilityUseTime; const cooldownProgress = Math.min(1, elapsed / ability.cooldown); const newWidth = `${cooldownProgress * 100}%`; if (abilityCooldownFill && abilityCooldownFill.style.width !== newWidth) { abilityCooldownFill.style.width = newWidth; } } else { if (abilityCooldownFill && abilityCooldownFill.style.width !== '100%') abilityCooldownFill.style.width = '100%'; } } else { if (abilityCooldownFill && abilityCooldownFill.style.width !== '0%') { abilityCooldownFill.style.width = '0%'; } } }
+    function updateEquippedAbilityUI() { if (equippedAbilityDisplay) { const ability = equippedAbilityKey ? abilitiesData[equippedAbilityKey] : null; equippedAbilityDisplay.textContent = ability ? `Ability: ${ability.name}` : 'Ability: None'; } if(abilityCooldownFill) abilityCooldownFill.style.width = equippedAbilityKey ? '100%' : '0%'; lastAbilityUseTime = -Infinity; }
 
-  function gameOver() {
-      console.log("gameOver called. Final Score:", score);
-      gameRunning = false;
-      player.state = PLAYER_STATE.DEAD;
-      if(finalScoreDisplay) finalScoreDisplay.textContent = `Score: ${score}`;
-      if(gameOverScreen) gameOverScreen.style.display = 'flex';
-      if(uiOverlay) uiOverlay.style.display = 'none';
-      clearAllSpawnTimers();
-  }
+    // --- Drawing Functions ---
+    function draw() { if (!ctx) return; ctx.clearRect(0, 0, canvasWidth, canvasHeight); if (abilityActiveStates.timeSlowActive) { ctx.save(); ctx.fillStyle = "rgba(100, 150, 255, 0.15)"; ctx.fillRect(0, 0, canvasWidth, canvasHeight); ctx.restore(); } drawObstacles(); drawParticles(); drawHomingMines(); drawClusterMines(); drawLightningBolts(); drawLightningStrikes(); if (boomerang) drawBoomerang(); if (player.state !== PLAYER_STATE.DEAD) drawPlayer(); drawAbilityEffects(); }
+    function drawPlayer() { ctx.save(); if (player.shielded) { ctx.beginPath(); ctx.arc(player.x, player.y, player.size + 5 + Math.sin(Date.now() * 0.01) * 2, 0, Math.PI * 2); ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 + Math.abs(Math.sin(Date.now() * 0.01)) * 0.4})`; ctx.lineWidth = 3; ctx.stroke(); } ctx.fillStyle = player.color; ctx.beginPath(); ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = (player.state === PLAYER_STATE.DOWNED) ? '#555' : '#333'; ctx.beginPath(); ctx.arc(player.x, player.y, player.size * 0.4, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+    function drawBoomerang() { ctx.save(); ctx.translate(boomerang.x, boomerang.y); ctx.rotate(boomerang.rotation); ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.moveTo(0, -boomerang.radius); ctx.lineTo(boomerang.radius * 1.2, boomerang.radius * 0.8); ctx.lineTo(0, boomerang.radius * 0.3); ctx.lineTo(-boomerang.radius * 1.2, boomerang.radius * 0.8); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'orange'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); }
+    function drawObstacles() { ctx.fillStyle = '#ff4444'; obstacles.balls.forEach(ball => { drawEnemyWithFreeze(ball, () => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2); ctx.fill(); }); }); ctx.fillStyle = '#FFAAAA'; obstacles.miniBalls.forEach(ball => { drawEnemyWithFreeze(ball, () => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2); ctx.fill(); }); }); ctx.fillStyle = '#ff8800'; obstacles.lavaBlocks.forEach(lava => { drawEnemyWithFreeze(lava, () => { ctx.fillRect(lava.x, lava.y, lava.width, lava.height); }); }); obstacles.electricZones.forEach(zone => { if (zone.active) { ctx.fillStyle = 'rgba(0, 255, 255, 0.7)'; ctx.fillRect(zone.x, zone.y, zone.width, zone.height); if (Math.random() > 0.3) { ctx.strokeStyle = 'white'; ctx.lineWidth = Math.random() * 2 + 0.5; ctx.beginPath(); const startX = zone.x + Math.random() * zone.width; const startY = zone.y + Math.random() * zone.height; const endX = startX + (Math.random() - 0.5) * 40; const endY = startY + (Math.random() - 0.5) * 40; ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke(); } } else { ctx.fillStyle = 'rgba(0, 100, 100, 0.2)'; ctx.fillRect(zone.x, zone.y, zone.width, zone.height); ctx.strokeStyle = 'rgba(0, 200, 200, 0.3)'; ctx.lineWidth = 1; ctx.strokeRect(zone.x, zone.y, zone.width, zone.height); } }); obstacles.dashers.forEach(d => { drawEnemyWithFreeze(d, () => { ctx.save(); ctx.translate(d.x + d.width / 2, d.y + d.height / 2); ctx.rotate(d.angle); ctx.fillStyle = '#FF69B4'; ctx.fillRect(-d.width/2, -d.height/2, d.width, d.height); ctx.restore(); }); }); ctx.strokeStyle = 'magenta'; ctx.lineWidth = 2; obstacles.spawnerBalls.forEach(s => { drawEnemyWithFreeze(s, () => { const pulse = Math.abs(Math.sin(Date.now() * 0.005 + s.x)); ctx.fillStyle = `rgba(128, 0, 128, ${0.6 + pulse * 0.4})`; ctx.beginPath(); ctx.arc(s.x, s.y, s.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }); }); ctx.fillStyle = 'lime'; obstacles.shields.forEach(shield => { const y = shield.displayY !== undefined ? shield.displayY : shield.y; ctx.beginPath(); ctx.arc(shield.x, y, shield.size, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#333'; ctx.font = `bold ${shield.size * 1.2}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('+', shield.x, y + 1); }); }
+    function drawHomingMines() { obstacles.homingMines.forEach(mine => { drawEnemyWithFreeze(mine, () => { ctx.fillStyle = 'grey'; ctx.strokeStyle = 'black'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); if (Math.floor(Date.now() / 300) % 2 === 0) { ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 4, 0, Math.PI * 2); ctx.fill(); } }); }); }
+    function drawClusterMines() { obstacles.clusterMines.forEach(mine => { drawEnemyWithFreeze(mine, () => { ctx.fillStyle = '#444'; ctx.strokeStyle = 'black'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); if (Math.floor(Date.now() / 250) % 2 === 0) { ctx.fillStyle = 'orange'; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 4, 0, Math.PI * 2); ctx.fill(); } }); }); }
+    function drawLightningBolts() { obstacles.lightningBolts.forEach(bolt => { ctx.save(); ctx.strokeStyle = `rgba(255, 255, 0, ${bolt.life / bolt.maxLife * 0.8})`; ctx.lineWidth = Math.random() * 3 + 2; ctx.beginPath(); ctx.moveTo(bolt.x1, bolt.y1); const midX = (bolt.x1 + bolt.x2) / 2 + (Math.random() - 0.5) * 20; const midY = (bolt.y1 + bolt.y2) / 2 + (Math.random() - 0.5) * 20; ctx.lineTo(midX, midY); ctx.lineTo(bolt.x2, bolt.y2); ctx.stroke(); ctx.restore(); }); }
+    function drawLightningStrikes() { ctx.save(); obstacles.lightningStrikes.forEach(strike => { const alpha = Math.max(0, strike.life / strike.maxLife); ctx.fillStyle = `rgba(255, 255, 150, ${alpha * 0.5})`; ctx.beginPath(); ctx.arc(strike.x, strike.y, strike.radius * (1 - alpha) * 1.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = `rgba(255, 255, 0, ${alpha})`; ctx.lineWidth = 4 * alpha + 1; ctx.beginPath(); ctx.moveTo(strike.x, 0); ctx.lineTo(strike.x + (Math.random() - 0.5) * 10, strike.y * 0.3); ctx.lineTo(strike.x + (Math.random() - 0.5) * 15, strike.y * 0.7); ctx.lineTo(strike.x, strike.y); ctx.stroke(); }); ctx.restore(); }
+    function drawParticles() { particles.forEach(p => { if (p.isPulse && p.draw) { p.draw(ctx); } else { ctx.fillStyle = `rgba(${hexToRgb(p.color).r}, ${hexToRgb(p.color).g}, ${hexToRgb(p.color).b}, ${p.alpha})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); } }); }
+    function drawEnemyWithFreeze(enemy, drawFunc) { const isFrozen = isEnemyFrozen(enemy); if (isFrozen) ctx.save(); drawFunc(); if (isFrozen) { ctx.fillStyle = "rgba(173, 216, 230, 0.5)"; if (enemy.size) { ctx.beginPath(); ctx.arc(enemy.x, enemy.y, enemy.size / 2 + 2, 0, Math.PI * 2); ctx.fill(); } else if (enemy.width) { ctx.fillRect(enemy.x - 2, enemy.y - 2, (enemy.width || 0) + 4, (enemy.height || 0) + 4); } ctx.restore(); } }
+    function drawAbilityEffects() { if (abilityActiveStates.repulsionFieldActive) { ctx.save(); const radius = abilitiesData.repulsionField.radius; const alpha = 0.1 + (abilityActiveStates.repulsionFieldTimer / abilitiesData.repulsionField.duration) * 0.2; ctx.fillStyle = `rgba(100, 100, 255, ${alpha})`; ctx.beginPath(); ctx.arc(player.x, player.y, radius, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } if (abilityActiveStates.singularityFieldActive) { ctx.save(); const radius = abilitiesData.singularityField.radius; const alpha = 0.1 + (abilityActiveStates.singularityFieldTimer / abilitiesData.singularityField.duration) * 0.2; ctx.fillStyle = `rgba(100, 0, 100, ${alpha})`; ctx.beginPath(); ctx.arc(player.x, player.y, radius, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } if (abilityActiveStates.vampiricTouchActive) { ctx.save(); const radius = player.size + 4 + Math.sin(Date.now() * 0.02) * 2; const alpha = 0.2 + (abilityActiveStates.vampiricTouchTimer / abilitiesData.vampiricTouch.duration) * 0.3; ctx.strokeStyle = `rgba(255, 0, 50, ${alpha})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(player.x, player.y, radius, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); } }
 
-  function clearAllSpawnTimers() {
-       for(const key in spawnTimers) {
-           if (spawnTimers[key]) { clearInterval(spawnTimers[key]); spawnTimers[key] = null; }
-       }
-  }
+    // --- Collision Detection ---
+    function checkCollisions() { if (player.state === PLAYER_STATE.DEAD || player.state === PLAYER_STATE.DOWNED) return; if (player.state === PLAYER_STATE.GHOST || player.state === PLAYER_STATE.DASHING) { obstacles.shields.forEach((shield, index) => { const y = shield.displayY !== undefined ? shield.displayY : shield.y; const dx = player.x - shield.x; const dy = player.y - y; if (Math.sqrt(dx * dx + dy * dy) < player.size + shield.size) { player.shielded = true; player.shieldTimer = player.shieldDuration; obstacles.shields.splice(index, 1); createParticles(player.x, player.y, 'lime', 20); } }); return; } let hit = false; let hitType = ''; obstacles.shields.forEach((shield, index) => { const y = shield.displayY !== undefined ? shield.displayY : shield.y; const dx = player.x - shield.x; const dy = player.y - y; if (Math.sqrt(dx * dx + dy * dy) < player.size + shield.size) { player.shielded = true; player.shieldTimer = player.shieldDuration; obstacles.shields.splice(index, 1); createParticles(player.x, player.y, 'lime', 20); } }); if (player.state === PLAYER_STATE.ALIVE && !player.shielded) { const checkEnemyHit = (enemy, sizeOrWidth, height) => { if (hit) return; if (isEnemyFrozen(enemy)) return; if (sizeOrWidth) { const dx = player.x - enemy.x; const dy = player.y - enemy.y; if (Math.sqrt(dx * dx + dy * dy) < player.size + sizeOrWidth / 2) return true; } else if (height) { if (player.x + player.size > enemy.x && player.x - player.size < enemy.x + enemy.width && player.y + player.size > enemy.y && player.y - player.size < enemy.y + height) return true; } return false; }; obstacles.balls.forEach(e => { if (checkEnemyHit(e, e.size)) { hit = true; hitType = 'ball'; } }); obstacles.miniBalls.forEach(e => { if (checkEnemyHit(e, e.size)) { hit = true; hitType = 'miniBall'; } }); obstacles.lavaBlocks.forEach(e => { if (checkEnemyHit(e, e.width, e.height)) { hit = true; hitType = 'lava'; } }); obstacles.electricZones.forEach(e => { if (hit) return; if (e.active && player.x + player.size > e.x && player.x - player.size < e.x + e.width && player.y + player.size > e.y && player.y - player.size < e.y + e.height) { hit = true; hitType = 'zone'; } }); obstacles.dashers.forEach(e => { if (checkEnemyHit(e, e.width, e.height)) { hit = true; hitType = 'dasher'; } }); obstacles.spawnerBalls.forEach(e => { if (checkEnemyHit(e, e.size)) { hit = true; hitType = 'spawnerBall'; } }); obstacles.homingMines.forEach((mine, index) => { if (checkEnemyHit(mine, mine.size)) { hit = true; hitType = 'homingMine'; createExplosion(mine.x, mine.y, 'orange', abilitiesData.homingMine.explosionRadius); obstacles.homingMines.splice(index, 1); } }); obstacles.clusterMines.forEach((mine, index) => { if (checkEnemyHit(mine, mine.size)) { hit = true; hitType = 'clusterMine'; activateClusterMineExplosion(mine); obstacles.clusterMines.splice(index, 1); } }); obstacles.lightningStrikes.forEach(strike => { if(hit) return; const dx = player.x - strike.x; const dy = player.y - strike.y; if(dx*dx + dy*dy < (strike.radius + player.size)*(strike.radius + player.size) && strike.life > strike.maxLife * 0.5 ) { hit=true; hitType='lightningStrike'; } }); } if (hit) handlePlayerHit(hitType); }
+    function handlePlayerHit(type = 'unknown') { if (player.state !== PLAYER_STATE.ALIVE) return; console.log(`Player hit by: ${type}`); const charm = abilitiesData.autoReviveCharm; if (!boomerang && charm.purchased && !charm.usedThisGame) { console.log("Auto-Revive Charm triggered!"); charm.usedThisGame = true; player.shielded = true; player.shieldTimer = 1500; player.state = PLAYER_STATE.ALIVE; createParticles(player.x, player.y, 'gold', 30); createPulseEffect(player.x, player.y, 100, 'rgba(255,215,0,0.7)', 500); return; } if (boomerang) { player.state = PLAYER_STATE.DOWNED; downedStartTime = Date.now(); if(downedTimerBar) { downedTimerBar.style.display = 'block'; downedTimerBar.style.left = `${player.x - downedTimerBar.offsetWidth / 2}px`; downedTimerBar.style.top = `${player.y + player.size + 10}px`; downedTimerBar.style.bottom = 'auto'; } if(downedTimerFill) downedTimerFill.style.width = '100%'; createParticles(player.x, player.y, '#FFA500', 15); } else { createExplosion(player.x, player.y, 'white', 40); gameOver(); } }
 
-  function setupSpawners() {
-      for (let i = 0; i < 3; i++) addBall();
-      addLavaBlock();
-      const rates = BASE_SPAWN_RATES; const multi = difficultyMultiplier;
-      spawnTimers.ball = setInterval(addBall, rates.ball / multi);
-      spawnTimers.lava = setInterval(addLavaBlock, rates.lava / multi);
-      spawnTimers.blade = setInterval(addBlade, rates.blade / multi);
-      spawnTimers.zone = setInterval(addElectricZone, rates.zone / multi);
-      spawnTimers.missile = setInterval(addHomingMissile, rates.missile / multi);
-      spawnTimers.laser = setInterval(addLaserBeam, rates.laser / multi);
-      spawnTimers.shield = setInterval(addShieldPowerup, rates.shield); // Shield spawn rate doesn't scale currently
-  }
+    // --- Object Creation Functions ---
+    function addBall() { const edge = Math.floor(Math.random() * 4); const size = 18 + Math.random() * 28; let x, y, dx, dy; const baseSpeed = (1.2 + Math.random() * 1.8) * (1 + (currentLevel - 1) * 0.12); switch(edge) { case 0: x = Math.random() * canvasWidth; y = -size; dx = (Math.random() - 0.5) * 4; dy = baseSpeed; break; case 1: x = canvasWidth + size; y = Math.random() * canvasHeight; dx = -baseSpeed; dy = (Math.random() - 0.5) * 4; break; case 2: x = Math.random() * canvasWidth; y = canvasHeight + size; dx = (Math.random() - 0.5) * 4; dy = -baseSpeed; break; default: x = -size; y = Math.random() * canvasHeight; dx = baseSpeed; dy = (Math.random() - 0.5) * 4; break; } obstacles.balls.push({ x, y, size, dx, dy }); }
+    function addLavaBlock() { const width = 40 + Math.random() * 80; const speed = (1.8 + Math.random() * 2.2) * (1 + (currentLevel-1)*0.12); obstacles.lavaBlocks.push({ x: Math.random() * (canvasWidth - width), y: -100, width, height: 25 + Math.random() * 35, speed }); }
+    function addElectricZone() { const size = 90 + Math.random() * 130; const baseOffDuration = 2500 + Math.random() * 3500; const baseOnDuration = 1200 + Math.random() * 1800; obstacles.electricZones.push({ x: Math.random() * (canvasWidth - size), y: Math.random() * (canvasHeight - size), width: size, height: size, active: false, timer: 0, baseOnDuration, baseOffDuration, interval: baseOffDuration }); }
+    function addShieldPowerup() { const size = 12; obstacles.shields.push({ x: Math.random() * (canvasWidth - size * 2) + size, y: -30, size: size, bobOffset: Math.random() * Math.PI * 2 }); }
+    function addDasher() { const length = 80 + Math.random() * 70; const thickness = 8 + Math.random() * 7; const speed = (7 + Math.random() * 5) * (1 + (currentLevel - 1) * 0.18); let x, y, vx, vy, width, height, angle; if (Math.random() > 0.5) { width = length; height = thickness; angle = 0; y = Math.random() * (canvasHeight - height); if (Math.random() > 0.5) { x = -width; vx = speed; } else { x = canvasWidth; vx = -speed; } vy = 0; } else { width = thickness; height = length; angle = Math.PI / 2; x = Math.random() * (canvasWidth - width); if (Math.random() > 0.5) { y = -height; vy = speed; } else { y = canvasHeight; vy = -speed; } vx = 0; } obstacles.dashers.push({ x, y, vx, vy, width, height, angle }); }
+    function addSpawnerBall() { const size = 40 + Math.random() * 20; const speed = 0.6 + Math.random() * 0.6; const angle = Math.random() * Math.PI * 2; const spawnInterval = Math.max(800, (2800 + Math.random() * 2000) / (1 + (currentLevel - 1) * 0.25)); obstacles.spawnerBalls.push({ x: Math.random() > 0.5 ? -size : canvasWidth + size, y: Math.random() * canvasHeight, size, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed, spawnInterval, spawnTimer: 0 }); }
+    function addMiniBall(spawnX, spawnY) { const count = 3 + Math.floor(Math.random() * 3); const baseSpeed = (2.5 + Math.random() * 2.5) * (1 + (currentLevel - 1) * 0.1); const size = 8 + Math.random() * 6; const life = 3000 + Math.random() * 2000; for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; obstacles.miniBalls.push({ x: spawnX, y: spawnY, size, life, dx: Math.cos(angle) * baseSpeed, dy: Math.sin(angle) * baseSpeed }); } }
 
-  function updateSpawnRates() {
-      console.log("Updating spawn rates...");
-      clearAllSpawnTimers();
-      difficultyMultiplier = 1 + (gameTime / 75000);
-      setupSpawners();
-      console.log("New Difficulty Multiplier:", difficultyMultiplier);
-  }
+    // --- Ability Activation Functions ---
+    function tryActivateAbility() { if (!equippedAbilityKey || player.state === PLAYER_STATE.DOWNED || player.state === PLAYER_STATE.DEAD || player.state === PLAYER_STATE.DASHING) return; const ability = abilitiesData[equippedAbilityKey]; if (!ability || ability.passive) { console.warn("Cannot activate: Invalid or passive ability key:", equippedAbilityKey); return; } const now = Date.now(); if (now - lastAbilityUseTime >= ability.cooldown) { console.log(`Activating ability: ${ability.name}`); lastAbilityUseTime = now; if (abilityCooldownFill) abilityCooldownFill.style.width = '0%'; switch (equippedAbilityKey) { case 'pulseShield': activatePulseShield(ability); break; case 'timeSlow': activateTimeSlow(ability); break; case 'homingMine': activateHomingMine(ability); break; case 'chainLightning': activateChainLightning(ability); break; case 'repulsionField': activateRepulsionField(ability); break; case 'ghostForm': activateGhostForm(ability); break; case 'freezeNova': activateFreezeNova(ability); break; case 'emergencyShield': activateEmergencyShield(ability); break; case 'megaPulseShield': activatePulseShield(ability); break; case 'temporalWarp': activateTimeSlow(ability); break; case 'clusterMine': activateClusterMine(ability); break; case 'lightningStorm': activateLightningStorm(ability); break; case 'singularityField': activateSingularityField(ability); break; case 'etherealShift': activateGhostForm(ability); break; case 'absoluteZero': activateFreezeNova(ability); break; case 'guardianShield': activateEmergencyShield(ability); break; case 'cooldownRefresh': activateCooldownRefresh(ability); break; case 'phaseDash': activatePhaseDash(ability); break; case 'vampiricTouch': activateVampiricTouch(ability); break; case 'orbitalLaser': case 'decoyProjection': case 'blackHole': case 'kineticBlast': case 'gravityWell': case 'overcharge': case 'reflectBarrier': case 'enemyStun': case 'bonusMultiplier': case 'hasteField': console.warn(`Ability '${ability.name}' activation logic not implemented.`); createParticles(player.x, player.y, 'grey', 5); break; default: console.error("Unknown ability key attempted to activate:", equippedAbilityKey); break; } } else { console.log("Ability on cooldown."); } }
+    function activatePulseShield(ability) { createPulseEffect(player.x, player.y, ability.radius, 'lightblue', 400); applyForceField(ability); }
+    function activateTimeSlow(ability) { if (!abilityActiveStates.timeSlowActive) { abilityActiveStates.timeSlowActive = true; abilityActiveStates.timeSlowTimer = ability.duration; console.log("Time slow activated!"); } }
+    function activateHomingMine(ability) { obstacles.homingMines.push({ x: player.x, y: player.y, size: ability.size, speed: ability.mineSpeed, life: ability.mineLife, target: null, explosionRadius: ability.explosionRadius, type: 'homingMine' }); createParticles(player.x, player.y, 'grey', 8); }
+    function activateChainLightning(ability) { const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; let targetsFound = 0; let potentialTargets = []; enemyTypes.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy)) return; const dx = enemy.x - player.x; const dy = enemy.y - player.y; const distSq = dx * dx + dy * dy; if (distSq < ability.range * ability.range) { potentialTargets.push({ obj: enemy, type: type, distSq: distSq }); } }); }); potentialTargets.sort((a, b) => a.distSq - b.distSq); let lastTargetPos = { x: player.x, y: player.y }; for (let i = 0; i < potentialTargets.length && targetsFound < ability.maxTargets; i++) { const target = potentialTargets[i]; const targetObj = target.obj; const targetType = target.type; const targetIndex = obstacles[targetType].indexOf(targetObj); if (targetIndex > -1) { obstacles.lightningBolts.push({ x1: lastTargetPos.x, y1: lastTargetPos.y, x2: targetObj.x, y2: targetObj.y, life: 200, maxLife: 200 }); obstacles[targetType].splice(targetIndex, 1); createExplosion(targetObj.x, targetObj.y, 'yellow', 15); lastTargetPos = { x: targetObj.x, y: targetObj.y }; targetsFound++; } } console.log(`Chain Lightning hit ${targetsFound} targets.`); if (targetsFound === 0) { createParticles(player.x, player.y, 'yellow', 5); } }
+    function activateRepulsionField(ability) { if (!abilityActiveStates.repulsionFieldActive) { abilityActiveStates.repulsionFieldActive = true; abilityActiveStates.repulsionFieldTimer = ability.duration; console.log("Repulsion Field activated!"); createPulseEffect(player.x, player.y, ability.radius, 'rgba(100,100,255,0.5)', 300); } }
+    function activateGhostForm(ability) { if (player.state === PLAYER_STATE.ALIVE) { abilityActiveStates.ghostFormTimer = ability.duration; player.state = PLAYER_STATE.GHOST; if(ability.id === 'etherealShift') { abilityActiveStates.etherealShiftActive = true; } console.log("Ghost Form activated!"); createParticles(player.x, player.y, 'lightblue', 20); } }
+    function activateFreezeNova(ability) { console.log("Freeze Nova activated!"); createPulseEffect(player.x, player.y, ability.radius, 'rgba(173, 216, 230, 0.7)', 500); const freezeRadiusSq = ability.radius * ability.radius; const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines', 'lavaBlocks']; enemyTypes.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy)) return; const dx = enemy.x - player.x; const dy = enemy.y - player.y; const distSq = dx * dx + dy * dy; if (distSq < freezeRadiusSq) { abilityActiveStates.freezeNovaActiveEnemies.push({ enemy: enemy, timer: ability.duration }); createParticles(enemy.x, enemy.y, 'lightblue', 3); } }); }); }
+    function activateEmergencyShield(ability) { if (!player.shielded) { player.shielded = true; player.shieldTimer = ability.duration; console.log("Emergency Shield activated!"); createParticles(player.x, player.y, 'cyan', 25); } else { console.log("Shield already active."); lastAbilityUseTime = -Infinity; } }
+    function activateClusterMine(ability) { obstacles.clusterMines.push({ x: player.x, y: player.y, size: ability.size, speed: ability.mineSpeed, life: ability.mineLife, target: null, type: 'clusterMine', ability: ability }); createParticles(player.x, player.y, '#555', 10); }
+    function activateClusterMineExplosion(mine) { console.log("Cluster Mine Exploding!"); createExplosion(mine.x, mine.y, '#666', 20); const ability = mine.ability; if (!ability) return; for (let i = 0; i < ability.subMines; i++) { const subMine = { x: mine.x + (Math.random() - 0.5) * 10, y: mine.y + (Math.random() - 0.5) * 10, size: ability.subMineSize, speed: ability.subMineSpeed, life: ability.subMineLife, target: null, explosionRadius: 20, type: 'homingMine' }; obstacles.homingMines.push(subMine); } }
+    function activateLightningStorm(ability) { if (!abilityActiveStates.lightningStormActive) { abilityActiveStates.lightningStormActive = true; abilityActiveStates.lightningStormTimer = ability.duration; abilityActiveStates.nextLightningStrike = Date.now(); console.log("Lightning Storm activated!"); } }
+    function spawnLightningStrike(x, y, radius) { console.log("Lightning Strike at", x, y); obstacles.lightningStrikes.push({ x: x, y: y, radius: radius, life: 400, maxLife: 400, damaged: false }); }
+    function checkLightningStrikeDamage(strike) { const strikeRadiusSq = strike.radius * strike.radius; const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; let hitCount = 0; enemyTypes.forEach(type => { for(let i = obstacles[type].length - 1; i >= 0; i--) { const enemy = obstacles[type][i]; if(isEnemyFrozen(enemy)) continue; const enemySize = enemy.size || (enemy.width + enemy.height) / 2 || 10; const checkRadiusSq = (strike.radius + enemySize / 2) * (strike.radius + enemySize / 2); const dx = enemy.x - strike.x; const dy = enemy.y - strike.y; if (dx * dx + dy * dy < checkRadiusSq) { console.log("Lightning hit enemy type:", type); obstacles[type].splice(i, 1); createExplosion(enemy.x, enemy.y, 'yellow', 8); hitCount++; } } }); }
+    function activateSingularityField(ability) { if (!abilityActiveStates.singularityFieldActive) { abilityActiveStates.singularityFieldActive = true; abilityActiveStates.singularityFieldTimer = ability.duration; console.log("Singularity Field activated!"); createPulseEffect(player.x, player.y, ability.radius, 'rgba(100,0,100,0.5)', 300); } }
+    function activateCooldownRefresh(ability) { console.log("Cooldown Refresh activated!"); lastBoomerangTime = -BOOMERANG_COOLDOWN; if(boomerangCooldownFill) boomerangCooldownFill.style.width = '100%'; createParticles(player.x, player.y, 'cyan', 15); }
+    function activatePhaseDash(ability) { if (player.state === PLAYER_STATE.ALIVE) { console.log("Phase Dash activated!"); player.state = PLAYER_STATE.DASHING; abilityActiveStates.phaseDashTimer = ability.duration; let dashAngle; if (currentKeyboardInput.dx !== 0 || currentKeyboardInput.dy !== 0) { dashAngle = Math.atan2(currentKeyboardInput.dy, currentKeyboardInput.dx); } else if (lastMoveDir.x !== 0 || lastMoveDir.y !== 0) { dashAngle = Math.atan2(lastMoveDir.y, lastMoveDir.x); } else { dashAngle = 0; } const dashSpeed = ability.distance / (ability.duration / 1000); abilityActiveStates.phaseDashVx = Math.cos(dashAngle) * dashSpeed; abilityActiveStates.phaseDashVy = Math.sin(dashAngle) * dashSpeed; createParticles(player.x, player.y, 'lightblue', 10); } }
+    function activateVampiricTouch(ability) { if (!abilityActiveStates.vampiricTouchActive) { abilityActiveStates.vampiricTouchActive = true; abilityActiveStates.vampiricTouchTimer = ability.duration; console.log("Vampiric Touch activated!"); createParticles(player.x, player.y, 'red', 15); } }
 
-  // --- Update Functions ---
-  function update(dt) {
-      if (player.state === PLAYER_STATE.DEAD) return;
-      gameTime += dt * 1000;
-      score = Math.floor(gameTime / 100);
-      if(scoreDisplay) scoreDisplay.textContent = `Score: ${score}`;
-      const currentSecondFloored = Math.floor(gameTime / 1000);
-      if (currentSecondFloored > 0 && currentSecondFloored % 30 === 0 && currentSecondFloored !== lastDifficultyUpdateTime) {
-          updateSpawnRates(); lastDifficultyUpdateTime = currentSecondFloored;
-      }
-      updatePlayer(dt);
-      updateBoomerang(dt);
-      updateObstacles(dt);
-      updatePowerups(dt); // Update shields
-      updateParticles(dt);
-      checkCollisions();
-      updateCooldownAndTimers();
-      if (player.state === PLAYER_STATE.DOWNED) {
-          const elapsedDowned = Date.now() - downedStartTime;
-          if (elapsedDowned >= DOWNED_DURATION) { createExplosion(player.x, player.y, 'white', 30); gameOver(); }
-          else {
-              const remainingRatio = 1 - (elapsedDowned / DOWNED_DURATION);
-              if(downedTimerFill) downedTimerFill.style.width = `${Math.max(0, remainingRatio * 100)}%`;
-              if(downedTimerBar){ downedTimerBar.style.left = `${player.x - downedTimerBar.offsetWidth / 2}px`; downedTimerBar.style.bottom = `${canvasHeight - player.y + player.size + 10}px`; }
-          }
-      }
-  }
-  function updatePlayer(dt) { if (player.state === PLAYER_STATE.DEAD) return; if (player.state === PLAYER_STATE.ALIVE) { if (movementMode === 'keyboard') { updateKeyboardMovement(dt); } else { updateMouseMovement(dt); } player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x)); player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y)); } if (player.shielded) { player.shieldTimer -= dt * 1000; if (player.shieldTimer <= 0) { player.shielded = false; player.shieldTimer = 0; } } if (player.state === PLAYER_STATE.DOWNED) { player.color = '#888'; } else if (player.shielded) { const shieldPulse = Math.abs(Math.sin(Date.now() * 0.01)); player.color = `rgba(0, 255, 255, ${0.5 + shieldPulse * 0.5})`; } else { player.color = 'white'; } }
-  function updateKeyboardMovement(dt) { let dx = 0; let dy = 0; if (keys['w'] || keys['arrowup']) dy -= player.speed; if (keys['a'] || keys['arrowleft']) dx -= player.speed; if (keys['s'] || keys['arrowdown']) dy += player.speed; if (keys['d'] || keys['arrowright']) dx += player.speed; if (dx !== 0 && dy !== 0) { dx *= 0.7071; dy *= 0.7071; } player.x += dx; player.y += dy; }
-  function updateMouseMovement(dt) { const dx = target.x - player.x; const dy = target.y - player.y; const dist = Math.sqrt(dx * dx + dy * dy); const lerpFactor = 0.15; if (dist > 1) { player.x += dx * lerpFactor; player.y += dy * lerpFactor; } else { player.x = target.x; player.y = target.y; } }
-  function tryThrowBoomerang() { const now = Date.now(); if (!boomerang && now - lastBoomerangTime >= BOOMERANG_COOLDOWN) { const angle = Math.atan2(target.y - player.y, target.x - player.x); boomerang = { x: player.x, y: player.y, startX: player.x, startY: player.y, radius: BOOMERANG_SIZE, speed: BOOMERANG_SPEED, angle: angle, out: true, rotation: 0 }; lastBoomerangTime = now; if(cooldownFill) cooldownFill.style.width = '0%'; } }
-  function updateBoomerang(dt) { if (!boomerang) { return; } boomerang.rotation += 15 * dt; let targetX, targetY; let currentAngle; if (boomerang.out) { const targetRangeX = boomerang.startX + Math.cos(boomerang.angle) * BOOMERANG_RANGE; const targetRangeY = boomerang.startY + Math.sin(boomerang.angle) * BOOMERANG_RANGE; const dxToRange = targetRangeX - boomerang.x; const dyToRange = targetRangeY - boomerang.y; currentAngle = Math.atan2(dyToRange, dxToRange); const distFromStart = Math.sqrt(Math.pow(boomerang.x - boomerang.startX, 2) + Math.pow(boomerang.y - boomerang.startY, 2)); if (distFromStart >= BOOMERANG_RANGE || (dxToRange*dxToRange + dyToRange*dyToRange < boomerang.speed*boomerang.speed)) { boomerang.out = false; } } else { targetX = player.x; targetY = player.y; const dxToPlayer = targetX - boomerang.x; const dyToPlayer = targetY - boomerang.y; currentAngle = Math.atan2(dyToPlayer, dxToPlayer); const distToPlayer = Math.sqrt(dxToPlayer*dxToPlayer + dyToPlayer*dyToPlayer); if (distToPlayer < player.size + boomerang.radius) { if (player.state === PLAYER_STATE.DOWNED) { player.state = PLAYER_STATE.ALIVE; player.color = 'white'; createParticles(player.x, player.y, 'cyan', 15); if(downedTimerBar) downedTimerBar.style.display = 'none'; } boomerang = null; return; } } boomerang.x += Math.cos(currentAngle) * boomerang.speed; boomerang.y += Math.sin(currentAngle) * boomerang.speed; if (boomerang.x < -100 || boomerang.x > canvasWidth + 100 || boomerang.y < -100 || boomerang.y > canvasHeight + 100) { boomerang = null; } }
-  function updateObstacles(dt) { const multi = difficultyMultiplier; obstacles.balls = obstacles.balls.filter(ball => { ball.x += ball.dx * multi; ball.y += ball.dy * multi; if (ball.x <= ball.size / 2) { ball.dx = Math.abs(ball.dx); ball.x = ball.size / 2; } if (ball.x >= canvasWidth - ball.size / 2) { ball.dx = -Math.abs(ball.dx); ball.x = canvasWidth - ball.size / 2; } if (ball.y <= ball.size / 2) { ball.dy = Math.abs(ball.dy); ball.y = ball.size / 2; } if (ball.y >= canvasHeight - ball.size / 2) { ball.dy = -Math.abs(ball.dy); ball.y = canvasHeight - ball.size / 2; } return !(ball.x < -ball.size * 2 || ball.x > canvasWidth + ball.size * 2 || ball.y < -ball.size * 2 || ball.y > canvasHeight + ball.size * 2); }); obstacles.lavaBlocks = obstacles.lavaBlocks.filter(lava => { lava.y += lava.speed * multi; return lava.y <= canvasHeight + lava.height; }); obstacles.blades.forEach(blade => { blade.angle += blade.speed * multi; }); obstacles.electricZones.forEach(zone => { zone.timer += dt * 1000; if (zone.timer >= zone.interval) { zone.active = !zone.active; zone.timer = 0; zone.interval = zone.active ? zone.onDuration : zone.offDuration; } }); obstacles.homingMissiles = obstacles.homingMissiles.filter((missile) => { const dx = player.x - missile.x; const dy = player.y - missile.y; const angle = Math.atan2(dy, dx); const speedMultiplier = 1; missile.x += Math.cos(angle) * missile.speed * multi * speedMultiplier; missile.y += Math.sin(angle) * missile.speed * multi * speedMultiplier; missile.angle = angle; missile.life -= dt * 1000; if (missile.life <= 0) { createExplosion(missile.x, missile.y, 'orange', 5); return false; } return true; }); obstacles.laserBeams = obstacles.laserBeams.filter((laser) => { laser.timer += dt * 1000; if (laser.state === 'warning' && laser.timer >= laser.warningDuration) { laser.state = 'firing'; laser.timer = 0; } else if (laser.state === 'firing' && laser.timer >= laser.fireDuration) { return false; } return true; }); }
-  // FIX: This function now correctly accesses obstacles.shields
-  function updatePowerups(dt) {
-      obstacles.shields = obstacles.shields.filter((shield) => {
-          shield.y += 1 * difficultyMultiplier; // Simple downward movement
-          shield.bobOffset = (shield.bobOffset || 0) + dt * 3;
-          shield.displayY = shield.y + Math.sin(shield.bobOffset + shield.x) * 3; // Bobbing
-          return shield.y <= canvasHeight + shield.size; // Remove if off screen
-      });
-  }
-  function updateParticles(dt) { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.vy += 0.1 * dt * 60; p.life -= dt * 1000; p.alpha = Math.max(0, p.life / p.maxLife); if (p.life <= 0) { particles.splice(i, 1); } } }
-  function updateCooldownAndTimers() { if (!boomerang) { const elapsed = Date.now() - lastBoomerangTime; const cooldownProgress = Math.min(1, elapsed / BOOMERANG_COOLDOWN); const newWidth = `${cooldownProgress * 100}%`; if(cooldownFill && cooldownFill.style.width !== newWidth) { cooldownFill.style.width = newWidth; } } else { if(cooldownFill && cooldownFill.style.width !== '0%') { cooldownFill.style.width = '0%'; } } }
+    // --- Ability Helpers ---
+    function applyForceField(ability) { const radiusSq = ability.radius * ability.radius; const force = ability.force; const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; enemyTypes.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy)) return; const dx = enemy.x - player.x; const dy = enemy.y - player.y; const distSq = dx * dx + dy * dy; if (distSq < radiusSq && distSq > 1) { const dist = Math.sqrt(distSq); const forceMagnitude = force * (1 - dist / ability.radius); const pushX = (dx / dist) * forceMagnitude; const pushY = (dy / dist) * forceMagnitude; if (enemy.dx !== undefined) { enemy.dx += pushX; enemy.dy += pushY; } else if (enemy.vx !== undefined) { enemy.vx += pushX; enemy.vy += pushY; } else { enemy.x += pushX * 0.5; enemy.y += pushY * 0.5; } } }); }); }
+    function isEnemyFrozen(enemy) { return abilityActiveStates.freezeNovaActiveEnemies.some(f => f.enemy === enemy); }
+    function unfreezeAllEnemies() { abilityActiveStates.freezeNovaActiveEnemies = []; console.log("Unfroze all enemies."); }
+    function findNearestEnemy(x, y, types) { let nearest = null; let minDistSq = Infinity; types.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy)) return; const dx = enemy.x - x; const dy = enemy.y - y; const distSq = dx * dx + dy * dy; if (distSq < minDistSq) { minDistSq = distSq; nearest = {obj: enemy, type: type}; } }); }); return nearest; }
 
-  // --- Drawing Functions ---
-  function draw() { if (!ctx) return; ctx.clearRect(0, 0, canvasWidth, canvasHeight); drawObstacles(); drawPowerups(); drawParticles(); if (boomerang) drawBoomerang(); if (player.state !== PLAYER_STATE.DEAD) drawPlayer(); drawLasers(); }
-  function drawPlayer() { ctx.save(); if (player.shielded) { ctx.beginPath(); ctx.arc(player.x, player.y, player.size + 5 + Math.sin(Date.now() * 0.01) * 2, 0, Math.PI * 2); ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 + Math.abs(Math.sin(Date.now() * 0.01)) * 0.4})`; ctx.lineWidth = 3; ctx.stroke(); } ctx.fillStyle = player.color; ctx.beginPath(); ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = (player.state === PLAYER_STATE.DOWNED) ? '#555' : '#333'; ctx.beginPath(); ctx.arc(player.x, player.y, player.size * 0.4, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
-  function drawBoomerang() { ctx.save(); ctx.translate(boomerang.x, boomerang.y); ctx.rotate(boomerang.rotation); ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.moveTo(0, -boomerang.radius); ctx.lineTo(boomerang.radius * 1.2, boomerang.radius * 0.8); ctx.lineTo(0, boomerang.radius * 0.3); ctx.lineTo(-boomerang.radius * 1.2, boomerang.radius * 0.8); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'orange'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); }
-  function drawObstacles() { ctx.fillStyle = '#ff4444'; obstacles.balls.forEach(ball => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2); ctx.fill(); }); ctx.fillStyle = '#ff8800'; obstacles.lavaBlocks.forEach(lava => { ctx.fillRect(lava.x, lava.y, lava.width, lava.height); }); ctx.fillStyle = '#aaaaaa'; obstacles.blades.forEach(blade => { ctx.save(); ctx.translate(blade.x, blade.y); ctx.rotate(blade.angle); const halfThick = blade.thickness / 2; ctx.fillRect(-blade.radius, -halfThick, blade.radius * 2, blade.thickness); ctx.fillRect(-halfThick, -blade.radius, blade.thickness, blade.radius * 2); ctx.restore(); }); obstacles.electricZones.forEach(zone => { if (zone.active) { ctx.fillStyle = 'rgba(0, 255, 255, 0.7)'; ctx.fillRect(zone.x, zone.y, zone.width, zone.height); if (Math.random() > 0.3) { ctx.strokeStyle = 'white'; ctx.lineWidth = Math.random() * 2 + 0.5; ctx.beginPath(); const startX = zone.x + Math.random() * zone.width; const startY = zone.y + Math.random() * zone.height; const endX = startX + (Math.random() - 0.5) * 40; const endY = startY + (Math.random() - 0.5) * 40; ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke(); } } else { ctx.fillStyle = 'rgba(0, 100, 100, 0.2)'; ctx.fillRect(zone.x, zone.y, zone.width, zone.height); ctx.strokeStyle = 'rgba(0, 200, 200, 0.3)'; ctx.lineWidth = 1; ctx.strokeRect(zone.x, zone.y, zone.width, zone.height); } }); obstacles.homingMissiles.forEach(missile => { ctx.save(); ctx.translate(missile.x, missile.y); ctx.rotate(missile.angle + Math.PI / 2); ctx.fillStyle = '#cc33ff'; ctx.beginPath(); ctx.moveTo(0, -missile.size * 1.2); ctx.lineTo(-missile.size * 0.6, missile.size * 0.6); ctx.lineTo(missile.size * 0.6, missile.size * 0.6); ctx.closePath(); ctx.fill(); const flameLength = missile.size * (1 + Math.random()); const flameWidth = missile.size * (0.6 + Math.random() * 0.3); ctx.fillStyle = `rgba(255, ${Math.random() * 100 + 100}, 0, ${0.6 + Math.random() * 0.3})`; ctx.fillRect(-flameWidth / 2, missile.size * 0.6 , flameWidth, flameLength); ctx.restore(); }); obstacles.laserBeams.forEach(laser => { if (laser.state === 'warning') { ctx.save(); ctx.beginPath(); ctx.moveTo(laser.startX, laser.startY); ctx.lineTo(laser.endX, laser.endY); const warnProgress = laser.timer / laser.warningDuration; const alpha = 0.1 + Math.abs(Math.sin(warnProgress * Math.PI * 4)) * 0.4; const widthPulse = laser.width * (0.2 + warnProgress * 0.8); ctx.strokeStyle = `rgba(255, 0, 0, ${alpha})`; ctx.lineWidth = widthPulse; ctx.setLineDash([15, 10]); ctx.lineCap = 'round'; ctx.stroke(); ctx.restore(); } }); }
-  function drawLasers() { obstacles.laserBeams.forEach(laser => { if (laser.state === 'firing') { ctx.save(); ctx.beginPath(); ctx.moveTo(laser.startX, laser.startY); ctx.lineTo(laser.endX, laser.endY); ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(255, 100, 100, 0.4)'; ctx.lineWidth = laser.width * 1.5; ctx.stroke(); ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'; ctx.lineWidth = laser.width; ctx.stroke(); ctx.strokeStyle = 'white'; ctx.lineWidth = laser.width * 0.3; ctx.stroke(); ctx.restore(); } }); }
-  // FIX: This function now correctly accesses obstacles.shields
-  function drawPowerups() {
-      ctx.fillStyle = 'lime';
-      obstacles.shields.forEach(shield => {
-          const y = shield.displayY !== undefined ? shield.displayY : shield.y;
-          ctx.beginPath();
-          ctx.arc(shield.x, y, shield.size, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#333';
-          ctx.font = `bold ${shield.size * 1.2}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('+', shield.x, y + 1);
-      });
-  }
-  function drawParticles() { particles.forEach(p => { ctx.fillStyle = `rgba(${hexToRgb(p.color).r}, ${hexToRgb(p.color).g}, ${hexToRgb(p.color).b}, ${p.alpha})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }); }
+    // --- Effects Functions ---
+    function createParticles(x, y, color, count) { for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 4 + 1; particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1, size: Math.random() * 2.5 + 1, life: 400 + Math.random() * 400, maxLife: 400 + Math.random() * 400, color: color, alpha: 1 }); } }
+    function createExplosion(x, y, color, count) { for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 6 + 3; particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, size: Math.random() * 3.5 + 1.5, life: 500 + Math.random() * 500, maxLife: 500 + Math.random() * 500, color: color, alpha: 1 }); } }
+    function createPulseEffect(x, y, maxRadius, color, life = 300) { particles.push({ x, y, size: 5, maxSize: maxRadius, life: life, maxLife: life, color, alpha: 0.8, vx: 0, vy: 0, isPulse: true, update: function(dt) { this.size += (this.maxSize / (this.maxLife / 1000)) * dt; this.alpha = Math.max(0, this.life / this.maxLife) * 0.8; }, draw: function(ctx) { const rgba = typeof this.color === 'string' && this.color.startsWith('rgba') ? this.color.replace(/,[^,]*\)$/, `, ${this.alpha})`) : `rgba(${hexToRgb(this.color).r}, ${hexToRgb(this.color).g}, ${hexToRgb(this.color).b}, ${this.alpha})`; ctx.save(); ctx.strokeStyle = rgba; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); } }); }
 
-  // --- Collision Detection ---
-  function checkCollisions() { if (player.state !== PLAYER_STATE.ALIVE) return; let hit = false; let hitType = ''; if (!player.shielded) { obstacles.shields.forEach((shield, index) => { if (hit) return; const y = shield.displayY !== undefined ? shield.displayY : shield.y; const dx = player.x - shield.x; const dy = player.y - y; if (Math.sqrt(dx * dx + dy * dy) < player.size + shield.size) { player.shielded = true; player.shieldTimer = player.shieldDuration; obstacles.shields.splice(index, 1); createParticles(player.x, player.y, 'lime', 20); } }); } if (player.shielded) return; obstacles.balls.forEach(ball => { if (hit) return; const dx = player.x - ball.x; const dy = player.y - ball.y; if (Math.sqrt(dx * dx + dy * dy) < player.size + ball.size / 2) { hit = true; hitType = 'ball'; } }); obstacles.lavaBlocks.forEach(lava => { if (hit) return; if (player.x > lava.x && player.x < lava.x + lava.width && player.y > lava.y && player.y < lava.y + lava.height) { hit = true; hitType = 'lava'; } }); obstacles.blades.forEach(blade => { if (hit) return; const dx = player.x - blade.x; const dy = player.y - blade.y; if (Math.sqrt(dx*dx + dy*dy) < player.size + blade.radius * 0.8) { hit = true; hitType = 'blade'; } }); obstacles.electricZones.forEach(zone => { if (hit) return; if (zone.active && player.x > zone.x && player.x < zone.x + zone.width && player.y > zone.y && player.y < zone.y + zone.height) { hit = true; hitType = 'zone'; } }); for (let i = obstacles.homingMissiles.length - 1; i >= 0; i--) { if (hit) break; const missile = obstacles.homingMissiles[i]; const dx = player.x - missile.x; const dy = player.y - missile.y; if (Math.sqrt(dx * dx + dy * dy) < player.size + missile.size) { hit = true; hitType = 'missile'; createExplosion(missile.x, missile.y, 'purple', 25); obstacles.homingMissiles.splice(i, 1); } } obstacles.laserBeams.forEach(laser => { if (hit) return; if (laser.state === 'firing') { if (pointLineSegmentDistance(player.x, player.y, laser.startX, laser.startY, laser.endX, laser.endY) < player.size + laser.width / 2) { hit = true; hitType = 'laser'; } } }); if (hit) { handlePlayerHit(); } }
-  function handlePlayerHit() { if (player.state !== PLAYER_STATE.ALIVE) return; if (boomerang) { player.state = PLAYER_STATE.DOWNED; downedStartTime = Date.now(); if(downedTimerBar) downedTimerBar.style.display = 'block'; if(downedTimerFill) downedTimerFill.style.width = '100%'; createParticles(player.x, player.y, '#FFA500', 15); if(downedTimerBar){ downedTimerBar.style.left = `${player.x - downedTimerBar.offsetWidth / 2}px`; downedTimerBar.style.bottom = `${canvasHeight - player.y + player.size + 10}px`;} } else { createExplosion(player.x, player.y, 'white', 40); gameOver(); } }
+    // --- Utility Functions ---
+    function hexToRgb(hex) { var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i; hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b); var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : { r: 255, g: 255, b: 255 }; }
 
-  // --- Object Creation Functions ---
-  function addBall() { const edge = Math.floor(Math.random() * 4); const size = 15 + Math.random() * 25; let x, y, dx, dy; const baseSpeed = 1 + Math.random() * 1.5; switch(edge) { case 0: x = Math.random() * canvasWidth; y = -size; dx = (Math.random() - 0.5) * 4; dy = baseSpeed; break; case 1: x = canvasWidth + size; y = Math.random() * canvasHeight; dx = -baseSpeed; dy = (Math.random() - 0.5) * 4; break; case 2: x = Math.random() * canvasWidth; y = canvasHeight + size; dx = (Math.random() - 0.5) * 4; dy = -baseSpeed; break; case 3: x = -size; y = Math.random() * canvasHeight; dx = baseSpeed; dy = (Math.random() - 0.5) * 4; break; } obstacles.balls.push({ x, y, size, dx, dy }); }
-  function addLavaBlock() { const width = 40 + Math.random() * 80; obstacles.lavaBlocks.push({ x: Math.random() * (canvasWidth - width), y: -100, width, height: 25 + Math.random() * 35, speed: 1.5 + Math.random() * 2 }); }
-  function addBlade() { obstacles.blades.push({ x: Math.random() * canvasWidth, y: Math.random() * canvasHeight, angle: Math.random() * Math.PI * 2, radius: 35 + Math.random() * 45, thickness: 8 + Math.random() * 7, speed: (0.04 + Math.random() * 0.06) * (Math.random() > 0.5 ? 1 : -1) }); }
-  function addElectricZone() { const size = 90 + Math.random() * 130; const offDuration = 2500 + Math.random() * 3500; obstacles.electricZones.push({ x: Math.random() * (canvasWidth - size), y: Math.random() * (canvasHeight - size), width: size, height: size, active: false, timer: 0, onDuration: 1200 + Math.random() * 1800, offDuration: offDuration, interval: offDuration }); }
-  function addHomingMissile() { const edge = Math.floor(Math.random() * 4); let x, y; const size = 9 + Math.random() * 5; switch(edge) { case 0: x = Math.random() * canvasWidth; y = -size; break; case 1: x = canvasWidth + size; y = Math.random() * canvasHeight; break; case 2: x = Math.random() * canvasWidth; y = canvasHeight + size; break; case 3: x = -size; y = Math.random() * canvasHeight; break; } obstacles.homingMissiles.push({ x, y, size, speed: 1.2 + Math.random() * 0.6, angle: 0, life: 7000 + Math.random() * 5000 }); }
-  function addLaserBeam() { const edge = Math.floor(Math.random() * 2); const width = 12 + Math.random() * 18; let startX, startY, endX, endY; if (edge === 0) { startY = Math.random() * canvasHeight; endY = startY; startX = (Math.random() > 0.5) ? -width * 2 : canvasWidth + width * 2; endX = (startX < 0) ? canvasWidth + width * 2 : -width * 2; } else { startX = Math.random() * canvasWidth; endX = startX; startY = (Math.random() > 0.5) ? -width * 2 : canvasHeight + width * 2; endY = (startY < 0) ? canvasHeight + width * 2 : -width * 2; } obstacles.laserBeams.push({ startX, startY, endX, endY, width, state: 'warning', timer: 0, warningDuration: 1300 + Math.random() * 900, fireDuration: 400 + Math.random() * 400 }); }
-  // FIX: This function now correctly adds to obstacles.shields
-  function addShieldPowerup() {
-      const size = 12;
-      obstacles.shields.push({
-          x: Math.random() * (canvasWidth - size * 2) + size,
-          y: -30, size: size, bobOffset: Math.random() * Math.PI * 2
-      });
-  }
+    // --- Shop Functions ---
+    function openShop() { updateShopUI(); showScreen('shopMenu'); }
+    function closeShop() { showScreen('menu'); }
+    function updateShopUI() { if (!abilityList || !shopCoinDisplay) return; shopCoinDisplay.textContent = `Coins: ${player.coins.toLocaleString()}`; abilityList.innerHTML = ''; const sortedAbilityKeys = Object.keys(abilitiesData).sort((a, b) => abilitiesData[a].cost - abilitiesData[b].cost); sortedAbilityKeys.forEach(key => { const ability = abilitiesData[key]; const li = document.createElement('li'); const infoDiv = document.createElement('div'); infoDiv.className = 'abilityInfo'; const passiveText = ability.passive ? ' (Passive)' : ''; infoDiv.innerHTML = `<h3>${ability.name}${passiveText}</h3><p>${ability.description} (Cost: ${ability.cost})</p>`; const actionsDiv = document.createElement('div'); actionsDiv.className = 'abilityActions'; if (ability.purchased) { if (!ability.passive) { const equipBtn = document.createElement('button'); if (equippedAbilityKey === key) { equipBtn.textContent = 'Equipped'; equipBtn.className = 'equippedBtn'; equipBtn.disabled = true; } else { equipBtn.textContent = 'Equip'; equipBtn.className = 'equipBtn'; equipBtn.onclick = () => equipAbility(key); } actionsDiv.appendChild(equipBtn); } else { const ownedText = document.createElement('span'); ownedText.textContent = 'Owned'; ownedText.style.color = '#6c757d'; ownedText.style.fontSize = '14px'; ownedText.style.marginLeft = '10px'; actionsDiv.appendChild(ownedText); } } else { const buyBtn = document.createElement('button'); buyBtn.textContent = 'Buy'; buyBtn.className = 'buyBtn'; buyBtn.disabled = player.coins < ability.cost; buyBtn.onclick = () => buyAbility(key); actionsDiv.appendChild(buyBtn); } li.appendChild(infoDiv); li.appendChild(actionsDiv); abilityList.appendChild(li); }); }
+    function buyAbility(key) { const ability = abilitiesData[key]; if (!ability.purchased && player.coins >= ability.cost) { player.coins -= ability.cost; ability.purchased = true; console.log(`Purchased ${ability.name}`); saveGameData(); updateShopUI(); updateCoinDisplays(); } else { console.log("Cannot buy ability - already owned or insufficient coins."); } }
+    function equipAbility(key) { const ability = abilitiesData[key]; if (ability?.purchased && !ability.passive) { equippedAbilityKey = key; console.log(`Equipped ${abilitiesData[key].name}`); saveGameData(); updateShopUI(); updateEquippedAbilityUI(); } else { console.log("Cannot equip - ability not purchased or is passive."); } }
+    function updateCoinDisplays() { const coinString = player.coins.toLocaleString(); if (coinDisplay) coinDisplay.textContent = `Total Coins: ${coinString}`; if (shopCoinDisplay) shopCoinDisplay.textContent = `Coins: ${coinString}`; }
 
-  // --- Effects Functions ---
-  function createParticles(x, y, color, count) { for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 4 + 1; particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1, size: Math.random() * 2.5 + 1, life: 400 + Math.random() * 400, maxLife: 400 + Math.random() * 400, color: color, alpha: 1 }); } }
-  function createExplosion(x, y, color, count) { for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 6 + 3; particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, size: Math.random() * 3.5 + 1.5, life: 500 + Math.random() * 500, maxLife: 500 + Math.random() * 500, color: color, alpha: 1 }); } }
+    // --- Secret Code Functions ---
+    function openCodePopup() { console.log("Opening code popup"); if (codeStatusMessage) codeStatusMessage.textContent = ''; if (secretCodeInput) secretCodeInput.value = ''; showScreen('secretCodePopup'); if (secretCodeInput) secretCodeInput.focus(); }
+    function closeCodePopup() { console.log("Closing code popup"); showScreen('shopMenu'); }
+    function submitCode() { if (!secretCodeInput || !codeStatusMessage) return; const enteredCode = secretCodeInput.value.trim(); console.log(`Code entered: ${enteredCode}`); if (enteredCode === SECRET_CODE) { console.log("Secret code CORRECT!"); player.coins += SECRET_CODE_REWARD; codeStatusMessage.textContent = `Success! +${SECRET_CODE_REWARD.toLocaleString()} Coins!`; codeStatusMessage.style.color = 'lime'; updateCoinDisplays(); saveGameData(); updateShopUI(); secretCodeInput.value = ''; } else { console.log("Secret code INCORRECT."); codeStatusMessage.textContent = "Invalid Code"; codeStatusMessage.style.color = 'red'; secretCodeInput.value = ''; } }
 
-  // --- Utility Functions ---
-  function toggleMovementMode() { movementMode = (movementMode === 'keyboard') ? 'mouse' : 'keyboard'; if(movementModeIndicator) movementModeIndicator.textContent = `Mode: ${movementMode.charAt(0).toUpperCase() + movementMode.slice(1)} (M to toggle)`; if (movementMode === 'keyboard') { target.x = player.x; target.y = player.y; } }
-  function hexToRgb(hex) { var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i; hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b); var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : { r: 255, g: 255, b: 255 }; }
-  function pointLineSegmentDistance(px, py, x1, y1, x2, y2) { const l2 = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1); if (l2 === 0) return Math.sqrt((px - x1) * (px - x1) + (py - y1) * (py - y1)); let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2; t = Math.max(0, Math.min(1, t)); const projX = x1 + t * (x2 - x1); const projY = y1 + t * (y2 - y1); return Math.sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY)); }
+    // --- Main Game Loop ---
+    let frameCount = 0; function gameLoop(currentTime) { frameCount++; if (!gameRunning) { return; } if (!lastFrameTime) lastFrameTime = currentTime; const dt = Math.min(0.1, (currentTime - lastFrameTime) / 1000); lastFrameTime = currentTime; try { update(dt); } catch (e) { console.error(`Update Error frame ${frameCount}:`, e); gameRunning = false; try { gameOver(); } catch (goE) {} return; } try { draw(); } catch (e) { console.error(`Draw Error frame ${frameCount}:`, e); gameRunning = false; try { gameOver(); } catch (goE) {} return; } requestAnimationFrame(gameLoop); }
 
-  // --- Main Game Loop ---
-  let frameCount = 0;
-  function gameLoop(currentTime) {
-      frameCount++;
-      if (!gameRunning) { return; }
+    // --- Event Listeners Setup ---
+    function setupEventListeners() { console.log("Setting up event listeners..."); window.addEventListener('resize', resizeCanvas); document.addEventListener('keydown', e => { const key = e.key.toLowerCase(); keys[key] = true; if (gameRunning && player.state !== PLAYER_STATE.DASHING) { if (e.code === ABILITY_KEY) { e.preventDefault(); tryActivateAbility(); } } if (secretCodePopup.style.display === 'flex' && e.key === 'Enter') { e.preventDefault(); submitCode(); } }); document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; }); if (canvas) { canvas.addEventListener('contextmenu', e => { e.preventDefault(); if (gameRunning) tryThrowBoomerang(); }); } else { console.error("Cannot add canvas listeners."); } if (startBtn) startBtn.onclick = startGame; else console.error("Start button not found."); if (restartBtn) restartBtn.onclick = startGame; else console.error("Restart button not found."); if (shopBtn) shopBtn.onclick = openShop; else console.error("Shop button not found."); if (closeShopBtn) closeShopBtn.onclick = closeShop; else console.error("Close Shop button not found."); if (mainMenuBtn) mainMenuBtn.onclick = () => showScreen('menu'); else console.error("Main Menu button not found."); if (secretCodeLock) secretCodeLock.onclick = openCodePopup; else console.error("Secret code lock not found."); if (submitCodeBtn) submitCodeBtn.onclick = submitCode; else console.error("Submit code button not found."); if (closeCodePopupBtn) closeCodePopupBtn.onclick = closeCodePopup; else console.error("Close code popup button not found."); console.log("Event listeners setup complete."); }
 
-      if (!lastFrameTime) lastFrameTime = currentTime;
-      const dt = Math.min(0.1, (currentTime - lastFrameTime) / 1000);
-      lastFrameTime = currentTime;
+    // --- Initialization ---
+    function initializeGame() {
+        console.log("Initializing game...");
+        if (!canvas || !ctx) {
+            console.error("FATAL: Canvas/Context missing.");
+            alert("Canvas Error.");
+            return;
+        }
+        loadGameData();
+        resizeCanvas();
+        setupEventListeners();
+        showScreen('menu');
+        console.log("Game Initialized. Ready.");
+    }
 
-      try { update(dt); }
-      catch (e) { console.error(`Update Error frame ${frameCount}:`, e); gameRunning = false; try { gameOver(); } catch (goE) { } alert("Update Error. See console."); return; }
+    // --- Start Everything ---
+    initializeGame();
 
-      try { draw(); }
-      catch (e) { console.error(`Draw Error frame ${frameCount}:`, e); gameRunning = false; try { gameOver(); } catch (goE) { } alert("Draw Error. See console."); return; }
-
-      requestAnimationFrame(gameLoop);
-  } // End of gameLoop
-
-  // --- Event Listeners Setup ---
-  function setupEventListeners() {
-      console.log("Setting up event listeners...");
-      window.addEventListener('resize', resizeCanvas);
-      document.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; if (e.key.toLowerCase() === 'm' && gameRunning) { toggleMovementMode(); } });
-      document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-      if (canvas) {
-          canvas.addEventListener('mousemove', e => { const rect = canvas.getBoundingClientRect(); target.x = e.clientX - rect.left; target.y = e.clientY - rect.top; });
-          canvas.addEventListener('contextmenu', e => { e.preventDefault(); if (!gameRunning || player.state !== PLAYER_STATE.ALIVE) return; tryThrowBoomerang(); });
-      } else { console.error("Cannot add canvas listeners."); }
-      if (startBtn) { startBtn.onclick = startGame; } else { console.error("Start button not found."); }
-      if (restartBtn) { restartBtn.onclick = () => { location.reload(); }; } else { console.error("Restart button not found."); }
-      console.log("Event listeners setup complete.");
-  }
-
-  // --- Initialization ---
-  function initializeGame() {
-      console.log("Initializing game...");
-      if (!canvas || !ctx) { console.error("FATAL: Canvas/Context missing."); alert("Canvas Error."); return; }
-      resizeCanvas();
-      setupEventListeners();
-      if(uiOverlay) uiOverlay.style.display = 'none';
-      if(gameOverScreen) gameOverScreen.style.display = 'none';
-      if(menu) menu.style.display = 'flex';
-      console.log("Game Initialized. Ready.");
-  }
-
-  // --- Start Everything ---
-  initializeGame();
-
+})(); // <<< End IIFE
 </script>
 </body>
 </html>
