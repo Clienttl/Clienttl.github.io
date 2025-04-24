@@ -70,6 +70,21 @@
         #levelUpIndicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 80px; font-weight: bold; color: yellow; text-shadow: 3px 3px 5px rgba(0,0,0,0.7); z-index: 100; pointer-events: none; opacity: 0; transition: opacity 0.5s ease-out; }
         #levelUpIndicator.visible { opacity: 1; }
 
+        /* Stun Effect */
+        .stunnedText {
+            position: absolute;
+            font-size: 10px;
+            color: yellow;
+            font-weight: bold;
+            pointer-events: none;
+            animation: stunPulse 0.5s infinite alternate ease-in-out;
+            text-shadow: 1px 1px 1px black;
+        }
+        @keyframes stunPulse {
+            from { transform: scale(1); opacity: 0.7; }
+            to   { transform: scale(1.1); opacity: 1; }
+        }
+
     </style>
 </head>
 <body>
@@ -228,18 +243,18 @@
         autoReviveCharm: { id: 'autoReviveCharm', name: "Auto-Revive Charm", description: "Passive: Revives you once per game if downed without boomerang.", cost: 500, cooldown: 0, purchased: false, passive: true, usedThisGame: false },
         orbitalLaser: { id: 'orbitalLaser', name: "Orbital Laser", description: "Call down a slow moving, damaging laser beam.", cost: 350, cooldown: 40000, purchased: false },
         decoyProjection: { id: 'decoyProjection', name: "Decoy Projection", description: "Create a temporary copy that draws some enemy fire.", cost: 160, cooldown: 25000, purchased: false },
-        blackHole: { id: 'blackHole', name: "Black Hole", description: "Create a vortex that destroys projectiles passing through.", cost: 290, cooldown: 35000, purchased: false },
+        blackHole: { id: 'blackHole', name: "Black Hole", description: "Create a vortex that destroys projectiles passing through.", cost: 290, cooldown: 35000, purchased: false, duration: 5000, radius: 70 },
         kineticBlast: { id: 'kineticBlast', name: "Kinetic Blast", description: "Damage scales with your current movement speed.", cost: 200, cooldown: 15000, purchased: false },
         gravityWell: { id: 'gravityWell', name: "Gravity Well", description: "Area that dramatically slows enemies inside.", cost: 180, cooldown: 20000, purchased: false },
         overcharge: { id: 'overcharge', name: "Overcharge", description: "Next ability used has no cooldown (one time).", cost: 400, cooldown: 60000, purchased: false },
         reflectBarrier: { id: 'reflectBarrier', name: "Reflect Barrier", description: "Temporary barrier that reflects basic projectiles.", cost: 260, cooldown: 30000, purchased: false },
-        enemyStun: { id: 'enemyStun', name: "Enemy Stun", description: "Briefly stuns all enemies on screen.", cost: 230, cooldown: 26000, purchased: false },
+        enemyStun: { id: 'enemyStun', name: "Enemy Stun", description: "Briefly stuns all enemies on screen.", cost: 230, cooldown: 26000, purchased: false, duration: 2500 },
         bonusMultiplier: { id: 'bonusMultiplier', name: "Bonus Multiplier", description: "Briefly doubles score gain.", cost: 150, cooldown: 45000, purchased: false },
         hasteField: { id: 'hasteField', name: "Haste Field", description: "Create a field that speeds up your movement inside.", cost: 140, cooldown: 18000, purchased: false }
     };
     let equippedAbilityKey = null;
     let lastAbilityUseTime = -Infinity;
-    let abilityActiveStates = { timeSlowTimer: 0, timeSlowActive: false, repulsionFieldTimer: 0, repulsionFieldActive: false, ghostFormTimer: 0, freezeNovaActiveEnemies: [], etherealShiftActive: false, singularityFieldTimer: 0, singularityFieldActive: false, lightningStormTimer: 0, lightningStormActive: false, nextLightningStrike: 0, phaseDashTimer: 0, phaseDashVx: 0, phaseDashVy: 0, vampiricTouchTimer: 0, vampiricTouchActive: false };
+    let abilityActiveStates = { timeSlowTimer: 0, timeSlowActive: false, repulsionFieldTimer: 0, repulsionFieldActive: false, ghostFormTimer: 0, freezeNovaActiveEnemies: [], etherealShiftActive: false, singularityFieldTimer: 0, singularityFieldActive: false, lightningStormTimer: 0, lightningStormActive: false, nextLightningStrike: 0, phaseDashTimer: 0, phaseDashVx: 0, phaseDashVy: 0, vampiricTouchTimer: 0, vampiricTouchActive: false, stunnedEnemies: [] }; // Added stunnedEnemies
 
     // --- Game State Variables ---
     let gameRunning = false;
@@ -255,11 +270,12 @@
     const keys = {};
     let lastMoveDir = { x: 1, y: 0 };
     let currentKeyboardInput = { dx: 0, dy: 0 };
-    const obstacles = { balls: [], lavaBlocks: [], electricZones: [], shields: [], dashers: [], spawnerBalls: [], miniBalls: [], homingMines: [], clusterMines: [], lightningBolts: [], lightningStrikes: [] };
+    const obstacles = { balls: [], lavaBlocks: [], electricZones: [], shields: [], dashers: [], spawnerBalls: [], miniBalls: [], homingMines: [], clusterMines: [], lightningBolts: [], lightningStrikes: [], blackHoles: [] }; // Added blackHoles
     const particles = [];
     const spawnTimers = { ball: null, lava: null, zone: null, shield: null, dasher: null, spawnerBall: null };
     let canvasWidth, canvasHeight;
     let levelUpDisplayTimeout = null;
+    let currentSpawnRates = {}; // Initialize currentSpawnRates
 
     // --- Player Object ---
     const player = { x: 0, y: 0, size: 15, speed: 3.2, state: PLAYER_STATE.ALIVE, color: 'white', shielded: false, shieldTimer: 0, shieldDuration: 5000, coins: 0 };
@@ -283,7 +299,7 @@
         lastMoveDir = { x: 1, y: 0 }; currentKeyboardInput = {dx: 0, dy: 0};
         resizeCanvas();
         boomerang = null; lastBoomerangTime = -BOOMERANG_COOLDOWN; lastAbilityUseTime = -Infinity;
-        abilityActiveStates = { timeSlowTimer: 0, timeSlowActive: false, repulsionFieldTimer: 0, repulsionFieldActive: false, ghostFormTimer: 0, freezeNovaActiveEnemies: [], etherealShiftActive: false, singularityFieldTimer: 0, singularityFieldActive: false, lightningStormTimer: 0, lightningStormActive: false, nextLightningStrike: 0, phaseDashTimer: 0, phaseDashVx: 0, phaseDashVy: 0, vampiricTouchTimer: 0, vampiricTouchActive: false };
+        abilityActiveStates = { timeSlowTimer: 0, timeSlowActive: false, repulsionFieldTimer: 0, repulsionFieldActive: false, ghostFormTimer: 0, freezeNovaActiveEnemies: [], etherealShiftActive: false, singularityFieldTimer: 0, singularityFieldActive: false, lightningStormTimer: 0, lightningStormActive: false, nextLightningStrike: 0, phaseDashTimer: 0, phaseDashVx: 0, phaseDashVy: 0, vampiricTouchTimer: 0, vampiricTouchActive: false, stunnedEnemies: [] };
         if(abilitiesData.autoReviveCharm) abilitiesData.autoReviveCharm.usedThisGame = false;
         if (boomerangCooldownFill) boomerangCooldownFill.style.width = '100%'; if (abilityCooldownFill) abilityCooldownFill.style.width = '100%';
         if (downedTimerBar) downedTimerBar.style.display = 'none'; if (levelDisplay) levelDisplay.textContent = `Level: ${currentLevel}`;
@@ -304,35 +320,289 @@
     function checkLevelUp() { if (score >= currentLevel * LEVEL_SCORE_THRESHOLD) { currentLevel++; player.coins += COINS_PER_LEVEL; coinsCollectedThisGame += COINS_PER_LEVEL; console.log(`--- LEVEL UP! Reached Level ${currentLevel}. Awarded ${COINS_PER_LEVEL} coins. Total: ${player.coins} ---`); if(levelDisplay) levelDisplay.textContent = `Level: ${currentLevel}`; updateCoinDisplays(); showLevelUpIndicator(); clearEnemiesAndProjectiles(); setTimeout(() => { setLevelDifficulty(); setupSpawners(); }, 500); } }
     function showLevelUpIndicator() { if (!levelUpIndicator) return; levelUpIndicator.textContent = `Level ${currentLevel}!`; levelUpIndicator.classList.add('visible'); if (levelUpDisplayTimeout) clearTimeout(levelUpDisplayTimeout); levelUpDisplayTimeout = setTimeout(hideLevelUpIndicator, LEVEL_UP_DISPLAY_DURATION); }
     function hideLevelUpIndicator() { if (!levelUpIndicator) return; levelUpIndicator.classList.remove('visible'); levelUpDisplayTimeout = null; }
-    function clearEnemiesAndProjectiles() { console.log("Clearing enemies for level up..."); obstacles.balls = []; obstacles.lavaBlocks = []; obstacles.electricZones = []; obstacles.dashers = []; obstacles.spawnerBalls = []; obstacles.miniBalls = []; obstacles.homingMines = []; obstacles.clusterMines = []; obstacles.lightningBolts = []; obstacles.lightningStrikes = []; unfreezeAllEnemies(); }
+    function clearEnemiesAndProjectiles() { console.log("Clearing enemies for level up..."); obstacles.balls = []; obstacles.lavaBlocks = []; obstacles.electricZones = []; obstacles.dashers = []; obstacles.spawnerBalls = []; obstacles.miniBalls = []; obstacles.homingMines = []; obstacles.clusterMines = []; obstacles.lightningBolts = []; obstacles.lightningStrikes = []; obstacles.blackHoles = []; unfreezeAllEnemies(); unstunAllEnemies(); }
 
     // --- Update Functions ---
-    function update(dt) { if (player.state === PLAYER_STATE.DEAD) return; gameTime += dt * 1000; if (player.state !== PLAYER_STATE.DOWNED) { score = Math.floor(gameTime / 100); if(scoreDisplay) scoreDisplay.textContent = `Score: ${score}`; checkLevelUp(); } updatePlayer(dt); updateBoomerang(dt); updateAbilities(dt); updateObstacles(dt); updateParticles(dt); checkCollisions(); updateCooldownAndTimers(); if (player.state === PLAYER_STATE.DOWNED) { const elapsedDowned = Date.now() - downedStartTime; if (elapsedDowned >= DOWNED_DURATION) { createExplosion(player.x, player.y, 'white', 30); gameOver(); } else { const remainingRatio = 1 - (elapsedDowned / DOWNED_DURATION); if (downedTimerFill) downedTimerFill.style.width = `${Math.max(0, remainingRatio * 100)}%`; if (downedTimerBar) { downedTimerBar.style.left = `${player.x - downedTimerBar.offsetWidth / 2}px`; downedTimerBar.style.top = `${player.y + player.size + 10}px`; downedTimerBar.style.bottom = 'auto'; } } } else { if (downedTimerBar && downedTimerBar.style.display !== 'none') { downedTimerBar.style.display = 'none'; } } }
+    function update(dt) {
+        if (player.state === PLAYER_STATE.DEAD) return;
+        gameTime += dt * 1000;
+        const effectiveDtMs = dt * 1000 * (abilityActiveStates.timeSlowActive ? abilitiesData.timeSlow.slowFactor : 1);
+
+        if (player.state !== PLAYER_STATE.DOWNED) {
+            score = Math.floor(gameTime / 100);
+            if(scoreDisplay) scoreDisplay.textContent = `Score: ${score}`;
+            checkLevelUp();
+        }
+        updatePlayer(dt);
+        updateBoomerang(dt);
+        updateAbilities(dt); // Includes updating active ability states/timers
+        updateObstacles(dt, effectiveDtMs); // Pass effectiveDtMs for obstacle movement/timers
+        updateParticles(dt);
+        checkCollisions();
+        updateCooldownAndTimers();
+
+        // Update Stun Timers
+        for (let i = abilityActiveStates.stunnedEnemies.length - 1; i >= 0; i--) {
+            abilityActiveStates.stunnedEnemies[i].timer -= effectiveDtMs;
+            if (abilityActiveStates.stunnedEnemies[i].timer <= 0) {
+                abilityActiveStates.stunnedEnemies.splice(i, 1);
+            }
+        }
+
+        // Update Freeze Timers
+        for (let i = abilityActiveStates.freezeNovaActiveEnemies.length - 1; i >= 0; i--) {
+            abilityActiveStates.freezeNovaActiveEnemies[i].timer -= effectiveDtMs;
+            if (abilityActiveStates.freezeNovaActiveEnemies[i].timer <= 0) {
+                abilityActiveStates.freezeNovaActiveEnemies.splice(i, 1);
+            }
+        }
+
+        if (player.state === PLAYER_STATE.DOWNED) {
+            const elapsedDowned = Date.now() - downedStartTime;
+            if (elapsedDowned >= DOWNED_DURATION) {
+                createExplosion(player.x, player.y, 'white', 30);
+                gameOver();
+            } else {
+                const remainingRatio = 1 - (elapsedDowned / DOWNED_DURATION);
+                if (downedTimerFill) downedTimerFill.style.width = `${Math.max(0, remainingRatio * 100)}%`;
+                if (downedTimerBar) {
+                    downedTimerBar.style.left = `${player.x - downedTimerBar.offsetWidth / 2}px`;
+                    downedTimerBar.style.top = `${player.y + player.size + 10}px`;
+                    downedTimerBar.style.bottom = 'auto';
+                }
+            }
+        } else {
+            if (downedTimerBar && downedTimerBar.style.display !== 'none') {
+                downedTimerBar.style.display = 'none';
+            }
+        }
+    }
     function updatePlayer(dt) { if (player.state === PLAYER_STATE.DEAD) return; if (abilityActiveStates.phaseDashTimer > 0) { player.state = PLAYER_STATE.DASHING; player.color = 'rgba(180, 180, 255, 0.6)'; player.x += abilityActiveStates.phaseDashVx * dt; player.y += abilityActiveStates.phaseDashVy * dt; abilityActiveStates.phaseDashTimer -= dt * 1000; if (abilityActiveStates.phaseDashTimer <= 0) { player.state = PLAYER_STATE.ALIVE; } player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x)); player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y)); return; } if (abilityActiveStates.ghostFormTimer > 0) { abilityActiveStates.ghostFormTimer -= dt * 1000; player.state = PLAYER_STATE.GHOST; player.color = 'rgba(200, 200, 255, 0.5)'; if (abilityActiveStates.ghostFormTimer <= 0) { player.state = PLAYER_STATE.ALIVE; abilityActiveStates.etherealShiftActive = false; } } else if (player.state === PLAYER_STATE.GHOST) { player.state = PLAYER_STATE.ALIVE; abilityActiveStates.etherealShiftActive = false; } if (player.state === PLAYER_STATE.ALIVE || player.state === PLAYER_STATE.GHOST) { let currentSpeed = player.speed; if (abilityActiveStates.etherealShiftActive && player.state === PLAYER_STATE.GHOST) { currentSpeed *= abilitiesData.etherealShift.speedPenalty; } updateKeyboardMovement(dt, currentSpeed); player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x)); player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y)); } if (player.shielded) { player.shieldTimer -= dt * 1000; if (player.shieldTimer <= 0) { player.shielded = false; player.shieldTimer = 0; } } if (player.state !== PLAYER_STATE.GHOST && player.state !== PLAYER_STATE.DASHING) { if (player.state === PLAYER_STATE.DOWNED) { player.color = '#888'; } else if (player.shielded) { const shieldPulse = Math.abs(Math.sin(Date.now() * 0.01)); player.color = `rgba(0, 255, 255, ${0.5 + shieldPulse * 0.5})`; } else { player.color = 'white'; } } }
     function updateKeyboardMovement(dt, speed) { let dx = 0; let dy = 0; if (keys['w'] || keys['arrowup']) dy -= 1; if (keys['a'] || keys['arrowleft']) dx -= 1; if (keys['s'] || keys['arrowdown']) dy += 1; if (keys['d'] || keys['arrowright']) dx += 1; currentKeyboardInput.dx = dx; currentKeyboardInput.dy = dy; const len = Math.sqrt(dx * dx + dy * dy); if (len > 0) { lastMoveDir.x = dx / len; lastMoveDir.y = dy / len; dx = (dx / len) * speed; dy = (dy / len) * speed; } else { dx = 0; dy = 0; } player.x += dx; player.y += dy; }
     function tryThrowBoomerang() { const now = Date.now(); if (!boomerang && now - lastBoomerangTime >= BOOMERANG_COOLDOWN && player.state === PLAYER_STATE.ALIVE) { const angle = Math.atan2(lastMoveDir.y, lastMoveDir.x); boomerang = { x: player.x, y: player.y, startX: player.x, startY: player.y, radius: BOOMERANG_SIZE, speed: BOOMERANG_SPEED, angle: angle, vx: Math.cos(angle) * BOOMERANG_SPEED, vy: Math.sin(angle) * BOOMERANG_SPEED, out: true, rotation: 0 }; lastBoomerangTime = now; if(boomerangCooldownFill) boomerangCooldownFill.style.width = '0%'; console.log(`Boomerang thrown`); } }
-    function updateBoomerang(dt) { if (!boomerang) { return; } boomerang.rotation += 20 * dt; const distFromStart = Math.sqrt(Math.pow(boomerang.x - boomerang.startX, 2) + Math.pow(boomerang.y - boomerang.startY, 2)); if (boomerang.out && distFromStart >= BOOMERANG_RANGE) { boomerang.out = false; } if (!boomerang.out) { const targetX = player.x; const targetY = player.y; const angleToTarget = Math.atan2(targetY - boomerang.y, targetX - boomerang.x); const accel = BOOMERANG_RETURN_ACCEL; boomerang.vx += Math.cos(angleToTarget) * accel; boomerang.vy += Math.sin(angleToTarget) * accel; const currentSpeedSq = boomerang.vx * boomerang.vx + boomerang.vy * boomerang.vy; if(currentSpeedSq > boomerang.speed * boomerang.speed) { const currentSpeed = Math.sqrt(currentSpeedSq); boomerang.vx = (boomerang.vx / currentSpeed) * boomerang.speed; boomerang.vy = (boomerang.vy / currentSpeed) * boomerang.speed; } const distToPlayer = Math.sqrt(Math.pow(targetX - boomerang.x, 2) + Math.pow(targetY - boomerang.y, 2)); if (distToPlayer < player.size + boomerang.radius) { if (player.state === PLAYER_STATE.DOWNED) { player.state = PLAYER_STATE.ALIVE; player.color = 'white'; createParticles(player.x, player.y, 'cyan', 15); if(downedTimerBar) downedTimerBar.style.display = 'none'; } boomerang = null; return; } } else { const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; let hitEnemy = false; for (const type of enemyTypes) { for (let i = obstacles[type].length - 1; i >= 0; i--) { const enemy = obstacles[type][i]; if (isEnemyFrozen(enemy)) continue; const enemySize = enemy.size || (enemy.width + enemy.height) / 2 || 10; const dx = boomerang.x - enemy.x; const dy = boomerang.y - enemy.y; if (dx * dx + dy * dy < (boomerang.radius + enemySize / 2) * (boomerang.radius + enemySize / 2)) { hitEnemy = true; createParticles(boomerang.x, boomerang.y, 'orange', 5); if(abilityActiveStates.vampiricTouchActive) { player.coins += abilitiesData.vampiricTouch.coinsPerHit; coinsCollectedThisGame += abilitiesData.vampiricTouch.coinsPerHit; updateCoinDisplays(); createParticles(enemy.x, enemy.y, 'gold', 3); } break; } } if (hitEnemy) break; } if (hitEnemy) { boomerang.out = false; } } let bounced = false; const nextX = boomerang.x + boomerang.vx; const nextY = boomerang.y + boomerang.vy; if (nextX - boomerang.radius < 0 || nextX + boomerang.radius > canvasWidth) { boomerang.vx *= -1; bounced = true; boomerang.x = Math.max(boomerang.radius, Math.min(canvasWidth - boomerang.radius, boomerang.x)); } if (nextY - boomerang.radius < 0 || nextY + boomerang.radius > canvasHeight) { boomerang.vy *= -1; bounced = true; boomerang.y = Math.max(boomerang.radius, Math.min(canvasHeight - boomerang.radius, boomerang.y)); } if (bounced && boomerang.out) { boomerang.out = false; } boomerang.x += boomerang.vx; boomerang.y += boomerang.vy; }
-    function updateAbilities(dt) { const now = Date.now(); if (abilityActiveStates.timeSlowActive) { abilityActiveStates.timeSlowTimer -= dt * 1000; if (abilityActiveStates.timeSlowTimer <= 0) { abilityActiveStates.timeSlowActive = false; console.log("Time slow ended."); } } if (abilityActiveStates.repulsionFieldActive) { abilityActiveStates.repulsionFieldTimer -= dt * 1000; if (abilityActiveStates.repulsionFieldTimer <= 0) { abilityActiveStates.repulsionFieldActive = false; console.log("Repulsion field ended."); } else { applyForceField(abilitiesData.repulsionField); if (Math.random() < 0.1) createPulseEffect(player.x, player.y, abilitiesData.repulsionField.radius, 'rgba(100,100,255,0.3)', 150); } } if (abilityActiveStates.singularityFieldActive) { abilityActiveStates.singularityFieldTimer -= dt * 1000; if (abilityActiveStates.singularityFieldTimer <= 0) { abilityActiveStates.singularityFieldActive = false; console.log("Singularity field ended."); } else { applyForceField(abilitiesData.singularityField); if (Math.random() < 0.1) createPulseEffect(player.x, player.y, abilitiesData.singularityField.radius, 'rgba(100,0,100,0.3)', 150); } } if (abilityActiveStates.lightningStormActive) { abilityActiveStates.lightningStormTimer -= dt * 1000; if (abilityActiveStates.lightningStormTimer <= 0) { abilityActiveStates.lightningStormActive = false; console.log("Lightning Storm ended."); } else { if (now >= abilityActiveStates.nextLightningStrike) { const ability = abilitiesData.lightningStorm; const angle = Math.random() * Math.PI * 2; const dist = Math.random() * ability.strikeRadius; const strikeX = player.x + Math.cos(angle) * dist; const strikeY = player.y + Math.sin(angle) * dist; spawnLightningStrike(strikeX, strikeY, ability.strikeDamageRadius); abilityActiveStates.nextLightningStrike = now + 1000 / ability.strikesPerSecond; } } } if (abilityActiveStates.vampiricTouchActive) { abilityActiveStates.vampiricTouchTimer -= dt * 1000; if (abilityActiveStates.vampiricTouchTimer <= 0) { abilityActiveStates.vampiricTouchActive = false; console.log("Vampiric Touch ended."); } } }
-    function updateObstacles(dt) { let baseSpeedMultiplier = 1 + (currentLevel - 1) * 0.07; if (abilityActiveStates.timeSlowActive) { baseSpeedMultiplier *= abilitiesData.timeSlow.slowFactor; } const processEnemy = (enemy, type) => { let currentSpeedMultiplier = baseSpeedMultiplier; let isFrozen = false; const frozenIndex = abilityActiveStates.freezeNovaActiveEnemies.findIndex(f => f.enemy === enemy); if (frozenIndex > -1) { const frozenInfo = abilityActiveStates.freezeNovaActiveEnemies[frozenIndex]; frozenInfo.timer -= dt * 1000; if (frozenInfo.timer <= 0) { abilityActiveStates.freezeNovaActiveEnemies.splice(frozenIndex, 1); } else { isFrozen = true; currentSpeedMultiplier = 0; } } const effectiveMultiplier = isFrozen ? 0 : (abilityActiveStates.timeSlowActive ? abilitiesData.timeSlow.slowFactor : 1); if (enemy.dx !== undefined) enemy.x += enemy.dx * effectiveMultiplier; if (enemy.dy !== undefined) enemy.y += enemy.dy * effectiveMultiplier; if (enemy.vx !== undefined) enemy.x += enemy.vx * effectiveMultiplier; if (enemy.vy !== undefined) enemy.y += enemy.vy * effectiveMultiplier; if (type === 'lavaBlock') { enemy.y += enemy.speed * effectiveMultiplier; return enemy.y <= canvasHeight + enemy.height; } else if (type === 'homingMine' || type === 'clusterMine') { enemy.life -= dt * 1000; if (enemy.life <= 0) { if (type === 'clusterMine') { activateClusterMineExplosion(enemy); } else { createExplosion(enemy.x, enemy.y, 'grey', 10); } return false; } if (!enemy.target) { enemy.target = findNearestEnemy(enemy.x, enemy.y, ['balls', 'miniBalls', 'dashers', 'spawnerBalls']); } if (enemy.target) { const targetObj = enemy.target.obj; const targetStillExists = obstacles[enemy.target.type].includes(targetObj); if (targetStillExists && !isEnemyFrozen(targetObj)) { const dx = targetObj.x - enemy.x; const dy = targetObj.y - enemy.y; const dist = Math.sqrt(dx*dx + dy*dy); const enemySize = targetObj.size || (targetObj.width + targetObj.height)/2 || 10; if (dist < enemySize / 2 + enemy.size / 2) { if (type === 'clusterMine') { activateClusterMineExplosion(enemy); } else { createExplosion(enemy.x, enemy.y, 'orange', abilitiesData.homingMine.explosionRadius); } const targetIndex = obstacles[enemy.target.type].indexOf(targetObj); if(targetIndex > -1) obstacles[enemy.target.type].splice(targetIndex, 1); return false; } else if (!isFrozen) { enemy.x += (dx / dist) * enemy.speed * effectiveMultiplier; enemy.y += (dy / dist) * enemy.speed * effectiveMultiplier; } } else { enemy.target = null; } } return true; } else if (type === 'ball' || type === 'miniBall' || type === 'spawnerBall') { if (enemy.x <= enemy.size / 2) { if(enemy.dx !== undefined) enemy.dx = Math.abs(enemy.dx); enemy.x = enemy.size / 2; } if (enemy.x >= canvasWidth - enemy.size / 2) { if(enemy.dx !== undefined) enemy.dx = -Math.abs(enemy.dx); enemy.x = canvasWidth - enemy.size / 2; } if (enemy.y <= enemy.size / 2) { if(enemy.dy !== undefined) enemy.dy = Math.abs(enemy.dy); enemy.y = enemy.size / 2; } if (enemy.y >= canvasHeight - enemy.size / 2) { if(enemy.dy !== undefined) enemy.dy = -Math.abs(enemy.dy); enemy.y = canvasHeight - enemy.size / 2; } if (type === 'miniBall') enemy.life -= dt * 1000; return !(enemy.x < -enemy.size * 2 || enemy.x > canvasWidth + enemy.size * 2 || enemy.y < -enemy.size * 2 || enemy.y > canvasHeight + enemy.size * 2) && (type !== 'miniBall' || enemy.life > 0); } else if (type === 'dasher') { return !(enemy.x < -enemy.width * 2 || enemy.x > canvasWidth + enemy.width * 2 || enemy.y < -enemy.height * 2 || enemy.y > canvasHeight + enemy.height * 2); } if (type === 'spawnerBall') { const effectiveTimerDt = dt * 1000 * effectiveMultiplier; enemy.spawnTimer += effectiveTimerDt; if (enemy.spawnTimer >= enemy.spawnInterval) { enemy.spawnTimer = 0; addMiniBall(enemy.x, enemy.y); } } return true; }; obstacles.balls = obstacles.balls.filter(e => processEnemy(e, 'ball')); obstacles.miniBalls = obstacles.miniBalls.filter(e => processEnemy(e, 'miniBall')); obstacles.lavaBlocks = obstacles.lavaBlocks.filter(e => processEnemy(e, 'lavaBlock')); obstacles.dashers = obstacles.dashers.filter(e => processEnemy(e, 'dasher')); obstacles.spawnerBalls = obstacles.spawnerBalls.filter(e => processEnemy(e, 'spawnerBall')); obstacles.homingMines = obstacles.homingMines.filter(e => processEnemy(e, 'homingMine')); obstacles.clusterMines = obstacles.clusterMines.filter(e => processEnemy(e, 'clusterMine')); obstacles.electricZones.forEach(zone => { zone.timer += dt * 1000 * (abilityActiveStates.timeSlowActive ? abilitiesData.timeSlow.slowFactor : 1); if (zone.timer >= zone.interval) { zone.active = !zone.active; zone.timer = 0; const onDurationMultiplier = 1 / (1 + (currentLevel - 1) * 0.1); const offDurationMultiplier = 1 / (1 + (currentLevel - 1) * 0.05); zone.interval = zone.active ? zone.baseOnDuration * onDurationMultiplier : zone.baseOffDuration * offDurationMultiplier; } }); obstacles.shields = obstacles.shields.filter((shield) => { shield.y += 1 * (abilityActiveStates.timeSlowActive ? abilitiesData.timeSlow.slowFactor : 1); shield.bobOffset = (shield.bobOffset || 0) + dt * 3; shield.displayY = shield.y + Math.sin(shield.bobOffset + shield.x) * 3; return shield.y <= canvasHeight + shield.size; }); obstacles.lightningBolts = obstacles.lightningBolts.filter(bolt => { bolt.life -= dt * 1000; return bolt.life > 0; }); obstacles.lightningStrikes = obstacles.lightningStrikes.filter(strike => { strike.life -= dt * 1000; if(strike.life > strike.maxLife * 0.8 && !strike.damaged) { checkLightningStrikeDamage(strike); strike.damaged = true; } return strike.life > 0; }); }
+    function updateBoomerang(dt) { if (!boomerang) { return; } boomerang.rotation += 20 * dt; const distFromStart = Math.sqrt(Math.pow(boomerang.x - boomerang.startX, 2) + Math.pow(boomerang.y - boomerang.startY, 2)); if (boomerang.out && distFromStart >= BOOMERANG_RANGE) { boomerang.out = false; } if (!boomerang.out) { const targetX = player.x; const targetY = player.y; const angleToTarget = Math.atan2(targetY - boomerang.y, targetX - boomerang.x); const accel = BOOMERANG_RETURN_ACCEL; boomerang.vx += Math.cos(angleToTarget) * accel; boomerang.vy += Math.sin(angleToTarget) * accel; const currentSpeedSq = boomerang.vx * boomerang.vx + boomerang.vy * boomerang.vy; if(currentSpeedSq > boomerang.speed * boomerang.speed) { const currentSpeed = Math.sqrt(currentSpeedSq); boomerang.vx = (boomerang.vx / currentSpeed) * boomerang.speed; boomerang.vy = (boomerang.vy / currentSpeed) * boomerang.speed; } const distToPlayer = Math.sqrt(Math.pow(targetX - boomerang.x, 2) + Math.pow(targetY - boomerang.y, 2)); if (distToPlayer < player.size + boomerang.radius) { if (player.state === PLAYER_STATE.DOWNED) { player.state = PLAYER_STATE.ALIVE; player.color = 'white'; createParticles(player.x, player.y, 'cyan', 15); if(downedTimerBar) downedTimerBar.style.display = 'none'; } boomerang = null; return; } } else { const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; let hitEnemy = false; for (const type of enemyTypes) { for (let i = obstacles[type].length - 1; i >= 0; i--) { const enemy = obstacles[type][i]; if (isEnemyFrozen(enemy) || isEnemyStunned(enemy)) continue; const enemySize = enemy.size || (enemy.width + enemy.height) / 2 || 10; const dx = boomerang.x - enemy.x; const dy = boomerang.y - enemy.y; if (dx * dx + dy * dy < (boomerang.radius + enemySize / 2) * (boomerang.radius + enemySize / 2)) { hitEnemy = true; createParticles(boomerang.x, boomerang.y, 'orange', 5); if(abilityActiveStates.vampiricTouchActive) { player.coins += abilitiesData.vampiricTouch.coinsPerHit; coinsCollectedThisGame += abilitiesData.vampiricTouch.coinsPerHit; updateCoinDisplays(); createParticles(enemy.x, enemy.y, 'gold', 3); } break; } } if (hitEnemy) break; } if (hitEnemy) { boomerang.out = false; } } let bounced = false; const nextX = boomerang.x + boomerang.vx; const nextY = boomerang.y + boomerang.vy; if (nextX - boomerang.radius < 0 || nextX + boomerang.radius > canvasWidth) { boomerang.vx *= -1; bounced = true; boomerang.x = Math.max(boomerang.radius, Math.min(canvasWidth - boomerang.radius, boomerang.x)); } if (nextY - boomerang.radius < 0 || nextY + boomerang.radius > canvasHeight) { boomerang.vy *= -1; bounced = true; boomerang.y = Math.max(boomerang.radius, Math.min(canvasHeight - boomerang.radius, boomerang.y)); } if (bounced && boomerang.out) { boomerang.out = false; } boomerang.x += boomerang.vx; boomerang.y += boomerang.vy; }
+    function updateAbilities(dt) { const now = Date.now(); const effectiveDtMs = dt * 1000 * (abilityActiveStates.timeSlowActive ? abilitiesData.timeSlow.slowFactor : 1); if (abilityActiveStates.timeSlowActive) { abilityActiveStates.timeSlowTimer -= dt * 1000; // Use raw dt here for ability duration
+        if (abilityActiveStates.timeSlowTimer <= 0) { abilityActiveStates.timeSlowActive = false; console.log("Time slow ended."); } } if (abilityActiveStates.repulsionFieldActive) { abilityActiveStates.repulsionFieldTimer -= dt * 1000; if (abilityActiveStates.repulsionFieldTimer <= 0) { abilityActiveStates.repulsionFieldActive = false; console.log("Repulsion field ended."); } else { applyForceField(abilitiesData.repulsionField); if (Math.random() < 0.1) createPulseEffect(player.x, player.y, abilitiesData.repulsionField.radius, 'rgba(100,100,255,0.3)', 150); } } if (abilityActiveStates.singularityFieldActive) { abilityActiveStates.singularityFieldTimer -= dt * 1000; if (abilityActiveStates.singularityFieldTimer <= 0) { abilityActiveStates.singularityFieldActive = false; console.log("Singularity field ended."); } else { applyForceField(abilitiesData.singularityField); if (Math.random() < 0.1) createPulseEffect(player.x, player.y, abilitiesData.singularityField.radius, 'rgba(100,0,100,0.3)', 150); } } if (abilityActiveStates.lightningStormActive) { abilityActiveStates.lightningStormTimer -= dt * 1000; if (abilityActiveStates.lightningStormTimer <= 0) { abilityActiveStates.lightningStormActive = false; console.log("Lightning Storm ended."); } else { const effectiveNow = abilityActiveStates.timeSlowActive ? (lastFrameTime - startTime) * abilitiesData.timeSlow.slowFactor + startTime : now; if (effectiveNow >= abilityActiveStates.nextLightningStrike) { const ability = abilitiesData.lightningStorm; const angle = Math.random() * Math.PI * 2; const dist = Math.random() * ability.strikeRadius; const strikeX = player.x + Math.cos(angle) * dist; const strikeY = player.y + Math.sin(angle) * dist; spawnLightningStrike(strikeX, strikeY, ability.strikeDamageRadius); abilityActiveStates.nextLightningStrike = effectiveNow + 1000 / ability.strikesPerSecond; } } } if (abilityActiveStates.vampiricTouchActive) { abilityActiveStates.vampiricTouchTimer -= dt * 1000; if (abilityActiveStates.vampiricTouchTimer <= 0) { abilityActiveStates.vampiricTouchActive = false; console.log("Vampiric Touch ended."); } } }
+    function updateObstacles(dt, effectiveDtMs) {
+        let baseSpeedMultiplier = 1 + (currentLevel - 1) * 0.07;
+        const effectiveMultiplier = abilityActiveStates.timeSlowActive ? abilitiesData.timeSlow.slowFactor : 1;
+
+        const processEnemy = (enemy, type) => {
+            const isFrozen = isEnemyFrozen(enemy);
+            const isStunned = isEnemyStunned(enemy);
+            const movementMultiplier = (isFrozen || isStunned) ? 0 : effectiveMultiplier;
+            const timerMultiplier = effectiveMultiplier; // Timers like life, spawn rate use effective time
+
+            if (enemy.dx !== undefined) enemy.x += enemy.dx * movementMultiplier;
+            if (enemy.dy !== undefined) enemy.y += enemy.dy * movementMultiplier;
+            if (enemy.vx !== undefined) enemy.x += enemy.vx * movementMultiplier;
+            if (enemy.vy !== undefined) enemy.y += enemy.vy * movementMultiplier;
+
+            if (type === 'lavaBlock') {
+                enemy.y += enemy.speed * movementMultiplier;
+                return enemy.y <= canvasHeight + enemy.height;
+            } else if (type === 'homingMine' || type === 'clusterMine') {
+                enemy.life -= timerMultiplier * 1000 * dt; // Use timerMultiplier
+                if (enemy.life <= 0) {
+                    if (type === 'clusterMine') { activateClusterMineExplosion(enemy); }
+                    else { createExplosion(enemy.x, enemy.y, 'grey', 10); }
+                    return false;
+                }
+                if (!isFrozen && !isStunned) {
+                    if (!enemy.target) { enemy.target = findNearestEnemy(enemy.x, enemy.y, ['balls', 'miniBalls', 'dashers', 'spawnerBalls']); }
+                    if (enemy.target) {
+                        const targetObj = enemy.target.obj;
+                        const targetStillExists = obstacles[enemy.target.type].includes(targetObj);
+                        if (targetStillExists && !isEnemyFrozen(targetObj) && !isEnemyStunned(targetObj)) {
+                            const dx = targetObj.x - enemy.x;
+                            const dy = targetObj.y - enemy.y;
+                            const dist = Math.sqrt(dx*dx + dy*dy);
+                            const enemySize = targetObj.size || (targetObj.width + targetObj.height)/2 || 10;
+                            if (dist < enemySize / 2 + enemy.size / 2) {
+                                if (type === 'clusterMine') { activateClusterMineExplosion(enemy); }
+                                else { createExplosion(enemy.x, enemy.y, 'orange', abilitiesData.homingMine.explosionRadius); }
+                                const targetIndex = obstacles[enemy.target.type].indexOf(targetObj);
+                                if(targetIndex > -1) obstacles[enemy.target.type].splice(targetIndex, 1);
+                                return false;
+                            } else {
+                                enemy.x += (dx / dist) * enemy.speed * movementMultiplier;
+                                enemy.y += (dy / dist) * enemy.speed * movementMultiplier;
+                            }
+                        } else { enemy.target = null; }
+                    }
+                }
+                return true;
+            } else if (type === 'ball' || type === 'miniBall' || type === 'spawnerBall') {
+                if (enemy.x <= enemy.size / 2) { if(enemy.dx !== undefined) enemy.dx = Math.abs(enemy.dx); enemy.x = enemy.size / 2; }
+                if (enemy.x >= canvasWidth - enemy.size / 2) { if(enemy.dx !== undefined) enemy.dx = -Math.abs(enemy.dx); enemy.x = canvasWidth - enemy.size / 2; }
+                if (enemy.y <= enemy.size / 2) { if(enemy.dy !== undefined) enemy.dy = Math.abs(enemy.dy); enemy.y = enemy.size / 2; }
+                if (enemy.y >= canvasHeight - enemy.size / 2) { if(enemy.dy !== undefined) enemy.dy = -Math.abs(enemy.dy); enemy.y = canvasHeight - enemy.size / 2; }
+                if (type === 'miniBall') enemy.life -= timerMultiplier * 1000 * dt;
+                return !(enemy.x < -enemy.size * 2 || enemy.x > canvasWidth + enemy.size * 2 || enemy.y < -enemy.size * 2 || enemy.y > canvasHeight + enemy.size * 2) && (type !== 'miniBall' || enemy.life > 0);
+            } else if (type === 'dasher') {
+                return !(enemy.x < -enemy.width * 2 || enemy.x > canvasWidth + enemy.width * 2 || enemy.y < -enemy.height * 2 || enemy.y > canvasHeight + enemy.height * 2);
+            }
+
+            if (type === 'spawnerBall' && !isFrozen && !isStunned) {
+                enemy.spawnTimer += timerMultiplier * 1000 * dt; // Use timerMultiplier
+                if (enemy.spawnTimer >= enemy.spawnInterval) {
+                    enemy.spawnTimer = 0;
+                    addMiniBall(enemy.x, enemy.y);
+                }
+            }
+            return true;
+        };
+
+        // Update Black Holes first (so they can affect others later)
+        obstacles.blackHoles = obstacles.blackHoles.filter(bh => {
+            bh.life -= effectiveDtMs;
+            bh.rotation += dt * 2; // Visual rotation
+            return bh.life > 0;
+        });
+
+        // Process enemies and check for black hole destruction
+        const enemyTypesToProcess = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines', 'lavaBlocks'];
+        enemyTypesToProcess.forEach(type => {
+            obstacles[type] = obstacles[type].filter(enemy => {
+                // Check if sucked into black hole
+                let destroyedByBlackHole = false;
+                for (const bh of obstacles.blackHoles) {
+                    const dx = enemy.x - bh.x;
+                    const dy = enemy.y - bh.y;
+                    const distSq = dx * dx + dy * dy;
+                    const enemyRadius = (enemy.size || Math.max(enemy.width || 0, enemy.height || 0)) / 2 || 5;
+                    if (distSq < (bh.radius + enemyRadius) * (bh.radius + enemyRadius)) {
+                        // Slightly pull towards center before destruction
+                        const pullStrength = 0.5;
+                        enemy.x += (bh.x - enemy.x) * pullStrength * dt * 10;
+                        enemy.y += (bh.y - enemy.y) * pullStrength * dt * 10;
+                        if (distSq < bh.radius * bh.radius * 0.25) { // Destroy when close enough
+                           createParticles(enemy.x, enemy.y, '#555', 5);
+                           destroyedByBlackHole = true;
+                           break;
+                        }
+                    }
+                }
+                if (destroyedByBlackHole) return false; // Removed by black hole
+
+                // If not destroyed, process normally
+                return processEnemy(enemy, type);
+            });
+        });
+
+
+        obstacles.electricZones.forEach(zone => {
+            zone.timer += effectiveDtMs; // Use effective time for zone timing
+            if (zone.timer >= zone.interval) {
+                zone.active = !zone.active;
+                zone.timer = 0;
+                const onDurationMultiplier = 1 / (1 + (currentLevel - 1) * 0.1);
+                const offDurationMultiplier = 1 / (1 + (currentLevel - 1) * 0.05);
+                zone.interval = zone.active ? zone.baseOnDuration * onDurationMultiplier : zone.baseOffDuration * offDurationMultiplier;
+            }
+        });
+
+        obstacles.shields = obstacles.shields.filter((shield) => {
+            shield.y += 1 * effectiveMultiplier; // Use movement multiplier
+            shield.bobOffset = (shield.bobOffset || 0) + dt * 3;
+            shield.displayY = shield.y + Math.sin(shield.bobOffset + shield.x) * 3;
+            return shield.y <= canvasHeight + shield.size;
+        });
+
+        obstacles.lightningBolts = obstacles.lightningBolts.filter(bolt => {
+             bolt.life -= effectiveDtMs; // Use effective time for visuals
+             return bolt.life > 0;
+        });
+
+        obstacles.lightningStrikes = obstacles.lightningStrikes.filter(strike => {
+            strike.life -= effectiveDtMs; // Use effective time for visuals/damage window
+            if(strike.life > strike.maxLife * 0.8 && !strike.damaged) {
+                checkLightningStrikeDamage(strike);
+                strike.damaged = true;
+            }
+            return strike.life > 0;
+        });
+    }
     function updateParticles(dt) { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; if (p.isPulse && p.update) { p.update(dt); } else { p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.vy += 0.1 * dt * 60; } p.life -= dt * 1000; p.alpha = Math.max(0, p.life / p.maxLife); if (p.life <= 0) { particles.splice(i, 1); } } }
     function updateCooldownAndTimers() { if (!boomerang) { const elapsed = Date.now() - lastBoomerangTime; const cooldownProgress = Math.min(1, elapsed / BOOMERANG_COOLDOWN); const newWidth = `${cooldownProgress * 100}%`; if (boomerangCooldownFill && boomerangCooldownFill.style.width !== newWidth) { boomerangCooldownFill.style.width = newWidth; } } else { if (boomerangCooldownFill && boomerangCooldownFill.style.width !== '0%') { boomerangCooldownFill.style.width = '0%'; } } if (equippedAbilityKey) { const ability = abilitiesData[equippedAbilityKey]; if (ability && ability.cooldown > 0) { const elapsed = Date.now() - lastAbilityUseTime; const cooldownProgress = Math.min(1, elapsed / ability.cooldown); const newWidth = `${cooldownProgress * 100}%`; if (abilityCooldownFill && abilityCooldownFill.style.width !== newWidth) { abilityCooldownFill.style.width = newWidth; } } else { if (abilityCooldownFill && abilityCooldownFill.style.width !== '100%') abilityCooldownFill.style.width = '100%'; } } else { if (abilityCooldownFill && abilityCooldownFill.style.width !== '0%') { abilityCooldownFill.style.width = '0%'; } } }
     function updateEquippedAbilityUI() { if (equippedAbilityDisplay) { const ability = equippedAbilityKey ? abilitiesData[equippedAbilityKey] : null; equippedAbilityDisplay.textContent = ability ? `Ability: ${ability.name}` : 'Ability: None'; } if(abilityCooldownFill) abilityCooldownFill.style.width = equippedAbilityKey ? '100%' : '0%'; lastAbilityUseTime = -Infinity; }
 
     // --- Drawing Functions ---
-    function draw() { if (!ctx) return; ctx.clearRect(0, 0, canvasWidth, canvasHeight); if (abilityActiveStates.timeSlowActive) { ctx.save(); ctx.fillStyle = "rgba(100, 150, 255, 0.15)"; ctx.fillRect(0, 0, canvasWidth, canvasHeight); ctx.restore(); } drawObstacles(); drawParticles(); drawHomingMines(); drawClusterMines(); drawLightningBolts(); drawLightningStrikes(); if (boomerang) drawBoomerang(); if (player.state !== PLAYER_STATE.DEAD) drawPlayer(); drawAbilityEffects(); }
+    function draw() { if (!ctx) return; ctx.clearRect(0, 0, canvasWidth, canvasHeight); if (abilityActiveStates.timeSlowActive) { ctx.save(); ctx.fillStyle = "rgba(100, 150, 255, 0.15)"; ctx.fillRect(0, 0, canvasWidth, canvasHeight); ctx.restore(); } drawObstacles(); drawParticles(); drawHomingMines(); drawClusterMines(); drawLightningBolts(); drawLightningStrikes(); drawBlackHoles(); if (boomerang) drawBoomerang(); if (player.state !== PLAYER_STATE.DEAD) drawPlayer(); drawAbilityEffects(); }
     function drawPlayer() { ctx.save(); if (player.shielded) { ctx.beginPath(); ctx.arc(player.x, player.y, player.size + 5 + Math.sin(Date.now() * 0.01) * 2, 0, Math.PI * 2); ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 + Math.abs(Math.sin(Date.now() * 0.01)) * 0.4})`; ctx.lineWidth = 3; ctx.stroke(); } ctx.fillStyle = player.color; ctx.beginPath(); ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = (player.state === PLAYER_STATE.DOWNED) ? '#555' : '#333'; ctx.beginPath(); ctx.arc(player.x, player.y, player.size * 0.4, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
     function drawBoomerang() { ctx.save(); ctx.translate(boomerang.x, boomerang.y); ctx.rotate(boomerang.rotation); ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.moveTo(0, -boomerang.radius); ctx.lineTo(boomerang.radius * 1.2, boomerang.radius * 0.8); ctx.lineTo(0, boomerang.radius * 0.3); ctx.lineTo(-boomerang.radius * 1.2, boomerang.radius * 0.8); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'orange'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); }
-    function drawObstacles() { ctx.fillStyle = '#ff4444'; obstacles.balls.forEach(ball => { drawEnemyWithFreeze(ball, () => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2); ctx.fill(); }); }); ctx.fillStyle = '#FFAAAA'; obstacles.miniBalls.forEach(ball => { drawEnemyWithFreeze(ball, () => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2); ctx.fill(); }); }); ctx.fillStyle = '#ff8800'; obstacles.lavaBlocks.forEach(lava => { drawEnemyWithFreeze(lava, () => { ctx.fillRect(lava.x, lava.y, lava.width, lava.height); }); }); obstacles.electricZones.forEach(zone => { if (zone.active) { ctx.fillStyle = 'rgba(0, 255, 255, 0.7)'; ctx.fillRect(zone.x, zone.y, zone.width, zone.height); if (Math.random() > 0.3) { ctx.strokeStyle = 'white'; ctx.lineWidth = Math.random() * 2 + 0.5; ctx.beginPath(); const startX = zone.x + Math.random() * zone.width; const startY = zone.y + Math.random() * zone.height; const endX = startX + (Math.random() - 0.5) * 40; const endY = startY + (Math.random() - 0.5) * 40; ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke(); } } else { ctx.fillStyle = 'rgba(0, 100, 100, 0.2)'; ctx.fillRect(zone.x, zone.y, zone.width, zone.height); ctx.strokeStyle = 'rgba(0, 200, 200, 0.3)'; ctx.lineWidth = 1; ctx.strokeRect(zone.x, zone.y, zone.width, zone.height); } }); obstacles.dashers.forEach(d => { drawEnemyWithFreeze(d, () => { ctx.save(); ctx.translate(d.x + d.width / 2, d.y + d.height / 2); ctx.rotate(d.angle); ctx.fillStyle = '#FF69B4'; ctx.fillRect(-d.width/2, -d.height/2, d.width, d.height); ctx.restore(); }); }); ctx.strokeStyle = 'magenta'; ctx.lineWidth = 2; obstacles.spawnerBalls.forEach(s => { drawEnemyWithFreeze(s, () => { const pulse = Math.abs(Math.sin(Date.now() * 0.005 + s.x)); ctx.fillStyle = `rgba(128, 0, 128, ${0.6 + pulse * 0.4})`; ctx.beginPath(); ctx.arc(s.x, s.y, s.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }); }); ctx.fillStyle = 'lime'; obstacles.shields.forEach(shield => { const y = shield.displayY !== undefined ? shield.displayY : shield.y; ctx.beginPath(); ctx.arc(shield.x, y, shield.size, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#333'; ctx.font = `bold ${shield.size * 1.2}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('+', shield.x, y + 1); }); }
-    function drawHomingMines() { obstacles.homingMines.forEach(mine => { drawEnemyWithFreeze(mine, () => { ctx.fillStyle = 'grey'; ctx.strokeStyle = 'black'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); if (Math.floor(Date.now() / 300) % 2 === 0) { ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 4, 0, Math.PI * 2); ctx.fill(); } }); }); }
-    function drawClusterMines() { obstacles.clusterMines.forEach(mine => { drawEnemyWithFreeze(mine, () => { ctx.fillStyle = '#444'; ctx.strokeStyle = 'black'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); if (Math.floor(Date.now() / 250) % 2 === 0) { ctx.fillStyle = 'orange'; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 4, 0, Math.PI * 2); ctx.fill(); } }); }); }
+    function drawObstacles() { ctx.fillStyle = '#ff4444'; obstacles.balls.forEach(ball => { drawEnemyWithStatus(ball, () => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2); ctx.fill(); }); }); ctx.fillStyle = '#FFAAAA'; obstacles.miniBalls.forEach(ball => { drawEnemyWithStatus(ball, () => { ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2); ctx.fill(); }); }); ctx.fillStyle = '#ff8800'; obstacles.lavaBlocks.forEach(lava => { drawEnemyWithStatus(lava, () => { ctx.fillRect(lava.x, lava.y, lava.width, lava.height); }); }); obstacles.electricZones.forEach(zone => { if (zone.active) { ctx.fillStyle = 'rgba(0, 255, 255, 0.7)'; ctx.fillRect(zone.x, zone.y, zone.width, zone.height); if (Math.random() > 0.3) { ctx.strokeStyle = 'white'; ctx.lineWidth = Math.random() * 2 + 0.5; ctx.beginPath(); const startX = zone.x + Math.random() * zone.width; const startY = zone.y + Math.random() * zone.height; const endX = startX + (Math.random() - 0.5) * 40; const endY = startY + (Math.random() - 0.5) * 40; ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke(); } } else { ctx.fillStyle = 'rgba(0, 100, 100, 0.2)'; ctx.fillRect(zone.x, zone.y, zone.width, zone.height); ctx.strokeStyle = 'rgba(0, 200, 200, 0.3)'; ctx.lineWidth = 1; ctx.strokeRect(zone.x, zone.y, zone.width, zone.height); } }); obstacles.dashers.forEach(d => { drawEnemyWithStatus(d, () => { ctx.save(); ctx.translate(d.x + d.width / 2, d.y + d.height / 2); ctx.rotate(d.angle); ctx.fillStyle = '#FF69B4'; ctx.fillRect(-d.width/2, -d.height/2, d.width, d.height); ctx.restore(); }); }); ctx.strokeStyle = 'magenta'; ctx.lineWidth = 2; obstacles.spawnerBalls.forEach(s => { drawEnemyWithStatus(s, () => { const pulse = Math.abs(Math.sin(Date.now() * 0.005 + s.x)); ctx.fillStyle = `rgba(128, 0, 128, ${0.6 + pulse * 0.4})`; ctx.beginPath(); ctx.arc(s.x, s.y, s.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }); }); ctx.fillStyle = 'lime'; obstacles.shields.forEach(shield => { const y = shield.displayY !== undefined ? shield.displayY : shield.y; ctx.beginPath(); ctx.arc(shield.x, y, shield.size, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#333'; ctx.font = `bold ${shield.size * 1.2}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('+', shield.x, y + 1); }); }
+    function drawHomingMines() { obstacles.homingMines.forEach(mine => { drawEnemyWithStatus(mine, () => { ctx.fillStyle = 'grey'; ctx.strokeStyle = 'black'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); if (Math.floor(Date.now() / 300) % 2 === 0) { ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 4, 0, Math.PI * 2); ctx.fill(); } }); }); }
+    function drawClusterMines() { obstacles.clusterMines.forEach(mine => { drawEnemyWithStatus(mine, () => { ctx.fillStyle = '#444'; ctx.strokeStyle = 'black'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); if (Math.floor(Date.now() / 250) % 2 === 0) { ctx.fillStyle = 'orange'; ctx.beginPath(); ctx.arc(mine.x, mine.y, mine.size / 4, 0, Math.PI * 2); ctx.fill(); } }); }); }
     function drawLightningBolts() { obstacles.lightningBolts.forEach(bolt => { ctx.save(); ctx.strokeStyle = `rgba(255, 255, 0, ${bolt.life / bolt.maxLife * 0.8})`; ctx.lineWidth = Math.random() * 3 + 2; ctx.beginPath(); ctx.moveTo(bolt.x1, bolt.y1); const midX = (bolt.x1 + bolt.x2) / 2 + (Math.random() - 0.5) * 20; const midY = (bolt.y1 + bolt.y2) / 2 + (Math.random() - 0.5) * 20; ctx.lineTo(midX, midY); ctx.lineTo(bolt.x2, bolt.y2); ctx.stroke(); ctx.restore(); }); }
     function drawLightningStrikes() { ctx.save(); obstacles.lightningStrikes.forEach(strike => { const alpha = Math.max(0, strike.life / strike.maxLife); ctx.fillStyle = `rgba(255, 255, 150, ${alpha * 0.5})`; ctx.beginPath(); ctx.arc(strike.x, strike.y, strike.radius * (1 - alpha) * 1.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = `rgba(255, 255, 0, ${alpha})`; ctx.lineWidth = 4 * alpha + 1; ctx.beginPath(); ctx.moveTo(strike.x, 0); ctx.lineTo(strike.x + (Math.random() - 0.5) * 10, strike.y * 0.3); ctx.lineTo(strike.x + (Math.random() - 0.5) * 15, strike.y * 0.7); ctx.lineTo(strike.x, strike.y); ctx.stroke(); }); ctx.restore(); }
     function drawParticles() { particles.forEach(p => { if (p.isPulse && p.draw) { p.draw(ctx); } else { ctx.fillStyle = `rgba(${hexToRgb(p.color).r}, ${hexToRgb(p.color).g}, ${hexToRgb(p.color).b}, ${p.alpha})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); } }); }
-    function drawEnemyWithFreeze(enemy, drawFunc) { const isFrozen = isEnemyFrozen(enemy); if (isFrozen) ctx.save(); drawFunc(); if (isFrozen) { ctx.fillStyle = "rgba(173, 216, 230, 0.5)"; if (enemy.size) { ctx.beginPath(); ctx.arc(enemy.x, enemy.y, enemy.size / 2 + 2, 0, Math.PI * 2); ctx.fill(); } else if (enemy.width) { ctx.fillRect(enemy.x - 2, enemy.y - 2, (enemy.width || 0) + 4, (enemy.height || 0) + 4); } ctx.restore(); } }
+    function drawEnemyWithStatus(enemy, drawFunc) {
+        const isFrozen = isEnemyFrozen(enemy);
+        const isStunned = isEnemyStunned(enemy);
+        ctx.save();
+        drawFunc(); // Draw the base enemy
+
+        if (isFrozen) {
+            ctx.fillStyle = "rgba(173, 216, 230, 0.5)";
+            const padding = 2;
+            if (enemy.size) {
+                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, enemy.size / 2 + padding, 0, Math.PI * 2); ctx.fill();
+            } else if (enemy.width) {
+                ctx.fillRect(enemy.x - padding, enemy.y - padding, (enemy.width || 0) + padding*2, (enemy.height || 0) + padding*2);
+            }
+        } else if (isStunned) {
+            // Draw stun effect (e.g., yellow tint or particles)
+            ctx.fillStyle = "rgba(255, 255, 0, 0.3)"; // Yellow overlay
+             const padding = 1;
+            if (enemy.size) {
+                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, enemy.size / 2 + padding, 0, Math.PI * 2); ctx.fill();
+            } else if (enemy.width) {
+                 ctx.fillRect(enemy.x - padding, enemy.y - padding, (enemy.width || 0) + padding*2, (enemy.height || 0) + padding*2);
+            }
+            // Optional: Draw "Zzz" above stunned enemy
+            if (Math.random() < 0.1) { // Only draw sometimes to avoid clutter
+                 ctx.fillStyle = 'yellow';
+                 ctx.font = 'bold 10px sans-serif';
+                 ctx.textAlign = 'center';
+                 ctx.fillText('Zzz', enemy.x, enemy.y - (enemy.size || enemy.height || 10) / 2 - 5);
+            }
+        }
+        ctx.restore();
+    }
     function drawAbilityEffects() { if (abilityActiveStates.repulsionFieldActive) { ctx.save(); const radius = abilitiesData.repulsionField.radius; const alpha = 0.1 + (abilityActiveStates.repulsionFieldTimer / abilitiesData.repulsionField.duration) * 0.2; ctx.fillStyle = `rgba(100, 100, 255, ${alpha})`; ctx.beginPath(); ctx.arc(player.x, player.y, radius, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } if (abilityActiveStates.singularityFieldActive) { ctx.save(); const radius = abilitiesData.singularityField.radius; const alpha = 0.1 + (abilityActiveStates.singularityFieldTimer / abilitiesData.singularityField.duration) * 0.2; ctx.fillStyle = `rgba(100, 0, 100, ${alpha})`; ctx.beginPath(); ctx.arc(player.x, player.y, radius, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } if (abilityActiveStates.vampiricTouchActive) { ctx.save(); const radius = player.size + 4 + Math.sin(Date.now() * 0.02) * 2; const alpha = 0.2 + (abilityActiveStates.vampiricTouchTimer / abilitiesData.vampiricTouch.duration) * 0.3; ctx.strokeStyle = `rgba(255, 0, 50, ${alpha})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(player.x, player.y, radius, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); } }
+    function drawBlackHoles() {
+        ctx.save();
+        obstacles.blackHoles.forEach(bh => {
+            const baseAlpha = 0.8 * Math.min(1, bh.life / 1000); // Fade out last second
+            // Draw swirling effect
+            const swirlCount = 5;
+            for (let i = 0; i < swirlCount; i++) {
+                const angleOffset = (Date.now() * 0.001 + i * (Math.PI * 2 / swirlCount)) * (i % 2 === 0 ? 1 : -1.2);
+                const armLength = bh.radius * (0.5 + (i / swirlCount) * 0.5);
+                const swirlX = bh.x + Math.cos(angleOffset) * armLength * 0.6;
+                const swirlY = bh.y + Math.sin(angleOffset) * armLength * 0.6;
+                 ctx.fillStyle = `rgba(50, 0, 80, ${baseAlpha * 0.5})`;
+                 ctx.beginPath();
+                 ctx.arc(swirlX, swirlY, bh.radius * 0.3, 0, Math.PI * 2);
+                 ctx.fill();
+            }
+            // Draw main body
+            const gradient = ctx.createRadialGradient(bh.x, bh.y, bh.radius * 0.1, bh.x, bh.y, bh.radius);
+            gradient.addColorStop(0, `rgba(0, 0, 0, ${baseAlpha})`);
+            gradient.addColorStop(0.8, `rgba(20, 0, 30, ${baseAlpha * 0.8})`);
+            gradient.addColorStop(1, `rgba(50, 0, 80, ${baseAlpha * 0.1})`);
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(bh.x, bh.y, bh.radius, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.restore();
+    }
 
     // --- Collision Detection ---
-    function checkCollisions() { if (player.state === PLAYER_STATE.DEAD || player.state === PLAYER_STATE.DOWNED) return; if (player.state === PLAYER_STATE.GHOST || player.state === PLAYER_STATE.DASHING) { obstacles.shields.forEach((shield, index) => { const y = shield.displayY !== undefined ? shield.displayY : shield.y; const dx = player.x - shield.x; const dy = player.y - y; if (Math.sqrt(dx * dx + dy * dy) < player.size + shield.size) { player.shielded = true; player.shieldTimer = player.shieldDuration; obstacles.shields.splice(index, 1); createParticles(player.x, player.y, 'lime', 20); } }); return; } let hit = false; let hitType = ''; obstacles.shields.forEach((shield, index) => { const y = shield.displayY !== undefined ? shield.displayY : shield.y; const dx = player.x - shield.x; const dy = player.y - y; if (Math.sqrt(dx * dx + dy * dy) < player.size + shield.size) { player.shielded = true; player.shieldTimer = player.shieldDuration; obstacles.shields.splice(index, 1); createParticles(player.x, player.y, 'lime', 20); } }); if (player.state === PLAYER_STATE.ALIVE && !player.shielded) { const checkEnemyHit = (enemy, sizeOrWidth, height) => { if (hit) return; if (isEnemyFrozen(enemy)) return; if (sizeOrWidth) { const dx = player.x - enemy.x; const dy = player.y - enemy.y; if (Math.sqrt(dx * dx + dy * dy) < player.size + sizeOrWidth / 2) return true; } else if (height) { if (player.x + player.size > enemy.x && player.x - player.size < enemy.x + enemy.width && player.y + player.size > enemy.y && player.y - player.size < enemy.y + height) return true; } return false; }; obstacles.balls.forEach(e => { if (checkEnemyHit(e, e.size)) { hit = true; hitType = 'ball'; } }); obstacles.miniBalls.forEach(e => { if (checkEnemyHit(e, e.size)) { hit = true; hitType = 'miniBall'; } }); obstacles.lavaBlocks.forEach(e => { if (checkEnemyHit(e, e.width, e.height)) { hit = true; hitType = 'lava'; } }); obstacles.electricZones.forEach(e => { if (hit) return; if (e.active && player.x + player.size > e.x && player.x - player.size < e.x + e.width && player.y + player.size > e.y && player.y - player.size < e.y + e.height) { hit = true; hitType = 'zone'; } }); obstacles.dashers.forEach(e => { if (checkEnemyHit(e, e.width, e.height)) { hit = true; hitType = 'dasher'; } }); obstacles.spawnerBalls.forEach(e => { if (checkEnemyHit(e, e.size)) { hit = true; hitType = 'spawnerBall'; } }); obstacles.homingMines.forEach((mine, index) => { if (checkEnemyHit(mine, mine.size)) { hit = true; hitType = 'homingMine'; createExplosion(mine.x, mine.y, 'orange', abilitiesData.homingMine.explosionRadius); obstacles.homingMines.splice(index, 1); } }); obstacles.clusterMines.forEach((mine, index) => { if (checkEnemyHit(mine, mine.size)) { hit = true; hitType = 'clusterMine'; activateClusterMineExplosion(mine); obstacles.clusterMines.splice(index, 1); } }); obstacles.lightningStrikes.forEach(strike => { if(hit) return; const dx = player.x - strike.x; const dy = player.y - strike.y; if(dx*dx + dy*dy < (strike.radius + player.size)*(strike.radius + player.size) && strike.life > strike.maxLife * 0.5 ) { hit=true; hitType='lightningStrike'; } }); } if (hit) handlePlayerHit(hitType); }
+    function checkCollisions() { if (player.state === PLAYER_STATE.DEAD || player.state === PLAYER_STATE.DOWNED) return; if (player.state === PLAYER_STATE.GHOST || player.state === PLAYER_STATE.DASHING) { obstacles.shields.forEach((shield, index) => { const y = shield.displayY !== undefined ? shield.displayY : shield.y; const dx = player.x - shield.x; const dy = player.y - y; if (Math.sqrt(dx * dx + dy * dy) < player.size + shield.size) { player.shielded = true; player.shieldTimer = player.shieldDuration; obstacles.shields.splice(index, 1); createParticles(player.x, player.y, 'lime', 20); } }); return; } let hit = false; let hitType = ''; obstacles.shields.forEach((shield, index) => { const y = shield.displayY !== undefined ? shield.displayY : shield.y; const dx = player.x - shield.x; const dy = player.y - y; if (Math.sqrt(dx * dx + dy * dy) < player.size + shield.size) { player.shielded = true; player.shieldTimer = player.shieldDuration; obstacles.shields.splice(index, 1); createParticles(player.x, player.y, 'lime', 20); } }); if (player.state === PLAYER_STATE.ALIVE && !player.shielded) { const checkEnemyHit = (enemy, sizeOrWidth, height) => { if (hit) return; if (isEnemyFrozen(enemy) || isEnemyStunned(enemy)) return; // Ignore frozen/stunned
+             if (sizeOrWidth) { const dx = player.x - enemy.x; const dy = player.y - enemy.y; if (Math.sqrt(dx * dx + dy * dy) < player.size + sizeOrWidth / 2) return true; } else if (height) { if (player.x + player.size > enemy.x && player.x - player.size < enemy.x + enemy.width && player.y + player.size > enemy.y && player.y - player.size < enemy.y + height) return true; } return false; }; obstacles.balls.forEach(e => { if (checkEnemyHit(e, e.size)) { hit = true; hitType = 'ball'; } }); obstacles.miniBalls.forEach(e => { if (checkEnemyHit(e, e.size)) { hit = true; hitType = 'miniBall'; } }); obstacles.lavaBlocks.forEach(e => { if (checkEnemyHit(e, e.width, e.height)) { hit = true; hitType = 'lava'; } }); obstacles.electricZones.forEach(e => { if (hit) return; if (e.active && player.x + player.size > e.x && player.x - player.size < e.x + e.width && player.y + player.size > e.y && player.y - player.size < e.y + e.height) { hit = true; hitType = 'zone'; } }); obstacles.dashers.forEach(e => { if (checkEnemyHit(e, e.width, e.height)) { hit = true; hitType = 'dasher'; } }); obstacles.spawnerBalls.forEach(e => { if (checkEnemyHit(e, e.size)) { hit = true; hitType = 'spawnerBall'; } }); obstacles.homingMines.forEach((mine, index) => { if (checkEnemyHit(mine, mine.size)) { hit = true; hitType = 'homingMine'; createExplosion(mine.x, mine.y, 'orange', abilitiesData.homingMine.explosionRadius); obstacles.homingMines.splice(index, 1); } }); obstacles.clusterMines.forEach((mine, index) => { if (checkEnemyHit(mine, mine.size)) { hit = true; hitType = 'clusterMine'; activateClusterMineExplosion(mine); obstacles.clusterMines.splice(index, 1); } }); obstacles.lightningStrikes.forEach(strike => { if(hit) return; const dx = player.x - strike.x; const dy = player.y - strike.y; if(dx*dx + dy*dy < (strike.radius + player.size)*(strike.radius + player.size) && strike.life > strike.maxLife * 0.5 ) { hit=true; hitType='lightningStrike'; } }); } if (hit) handlePlayerHit(hitType); }
     function handlePlayerHit(type = 'unknown') { if (player.state !== PLAYER_STATE.ALIVE) return; console.log(`Player hit by: ${type}`); const charm = abilitiesData.autoReviveCharm; if (!boomerang && charm.purchased && !charm.usedThisGame) { console.log("Auto-Revive Charm triggered!"); charm.usedThisGame = true; player.shielded = true; player.shieldTimer = 1500; player.state = PLAYER_STATE.ALIVE; createParticles(player.x, player.y, 'gold', 30); createPulseEffect(player.x, player.y, 100, 'rgba(255,215,0,0.7)', 500); return; } if (boomerang) { player.state = PLAYER_STATE.DOWNED; downedStartTime = Date.now(); if(downedTimerBar) { downedTimerBar.style.display = 'block'; downedTimerBar.style.left = `${player.x - downedTimerBar.offsetWidth / 2}px`; downedTimerBar.style.top = `${player.y + player.size + 10}px`; downedTimerBar.style.bottom = 'auto'; } if(downedTimerFill) downedTimerFill.style.width = '100%'; createParticles(player.x, player.y, '#FFA500', 15); } else { createExplosion(player.x, player.y, 'white', 40); gameOver(); } }
 
     // --- Object Creation Functions ---
@@ -345,30 +615,62 @@
     function addMiniBall(spawnX, spawnY) { const count = 3 + Math.floor(Math.random() * 3); const baseSpeed = (2.5 + Math.random() * 2.5) * (1 + (currentLevel - 1) * 0.1); const size = 8 + Math.random() * 6; const life = 3000 + Math.random() * 2000; for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; obstacles.miniBalls.push({ x: spawnX, y: spawnY, size, life, dx: Math.cos(angle) * baseSpeed, dy: Math.sin(angle) * baseSpeed }); } }
 
     // --- Ability Activation Functions ---
-    function tryActivateAbility() { if (!equippedAbilityKey || player.state === PLAYER_STATE.DOWNED || player.state === PLAYER_STATE.DEAD || player.state === PLAYER_STATE.DASHING) return; const ability = abilitiesData[equippedAbilityKey]; if (!ability || ability.passive) { console.warn("Cannot activate: Invalid or passive ability key:", equippedAbilityKey); return; } const now = Date.now(); if (now - lastAbilityUseTime >= ability.cooldown) { console.log(`Activating ability: ${ability.name}`); lastAbilityUseTime = now; if (abilityCooldownFill) abilityCooldownFill.style.width = '0%'; switch (equippedAbilityKey) { case 'pulseShield': activatePulseShield(ability); break; case 'timeSlow': activateTimeSlow(ability); break; case 'homingMine': activateHomingMine(ability); break; case 'chainLightning': activateChainLightning(ability); break; case 'repulsionField': activateRepulsionField(ability); break; case 'ghostForm': activateGhostForm(ability); break; case 'freezeNova': activateFreezeNova(ability); break; case 'emergencyShield': activateEmergencyShield(ability); break; case 'megaPulseShield': activatePulseShield(ability); break; case 'temporalWarp': activateTimeSlow(ability); break; case 'clusterMine': activateClusterMine(ability); break; case 'lightningStorm': activateLightningStorm(ability); break; case 'singularityField': activateSingularityField(ability); break; case 'etherealShift': activateGhostForm(ability); break; case 'absoluteZero': activateFreezeNova(ability); break; case 'guardianShield': activateEmergencyShield(ability); break; case 'cooldownRefresh': activateCooldownRefresh(ability); break; case 'phaseDash': activatePhaseDash(ability); break; case 'vampiricTouch': activateVampiricTouch(ability); break; case 'orbitalLaser': case 'decoyProjection': case 'blackHole': case 'kineticBlast': case 'gravityWell': case 'overcharge': case 'reflectBarrier': case 'enemyStun': case 'bonusMultiplier': case 'hasteField': console.warn(`Ability '${ability.name}' activation logic not implemented.`); createParticles(player.x, player.y, 'grey', 5); break; default: console.error("Unknown ability key attempted to activate:", equippedAbilityKey); break; } } else { console.log("Ability on cooldown."); } }
+    function tryActivateAbility() { if (!equippedAbilityKey || player.state === PLAYER_STATE.DOWNED || player.state === PLAYER_STATE.DEAD || player.state === PLAYER_STATE.DASHING) return; const ability = abilitiesData[equippedAbilityKey]; if (!ability || ability.passive) { console.warn("Cannot activate: Invalid or passive ability key:", equippedAbilityKey); return; } const now = Date.now(); if (now - lastAbilityUseTime >= ability.cooldown) { console.log(`Activating ability: ${ability.name}`); lastAbilityUseTime = now; if (abilityCooldownFill) abilityCooldownFill.style.width = '0%'; switch (equippedAbilityKey) { case 'pulseShield': activatePulseShield(ability); break; case 'timeSlow': activateTimeSlow(ability); break; case 'homingMine': activateHomingMine(ability); break; case 'chainLightning': activateChainLightning(ability); break; case 'repulsionField': activateRepulsionField(ability); break; case 'ghostForm': activateGhostForm(ability); break; case 'freezeNova': activateFreezeNova(ability); break; case 'emergencyShield': activateEmergencyShield(ability); break; case 'megaPulseShield': activatePulseShield(ability); break; case 'temporalWarp': activateTimeSlow(ability); break; case 'clusterMine': activateClusterMine(ability); break; case 'lightningStorm': activateLightningStorm(ability); break; case 'singularityField': activateSingularityField(ability); break; case 'etherealShift': activateGhostForm(ability); break; case 'absoluteZero': activateFreezeNova(ability); break; case 'guardianShield': activateEmergencyShield(ability); break; case 'cooldownRefresh': activateCooldownRefresh(ability); break; case 'phaseDash': activatePhaseDash(ability); break; case 'vampiricTouch': activateVampiricTouch(ability); break; case 'blackHole': activateBlackHole(ability); break; // Added case
+             case 'enemyStun': activateEnemyStun(ability); break; // Added case
+             case 'orbitalLaser': case 'decoyProjection': case 'kineticBlast': case 'gravityWell': case 'overcharge': case 'reflectBarrier': case 'bonusMultiplier': case 'hasteField': console.warn(`Ability '${ability.name}' activation logic not implemented.`); createParticles(player.x, player.y, 'grey', 5); break; default: console.error("Unknown ability key attempted to activate:", equippedAbilityKey); break; } } else { console.log("Ability on cooldown."); } }
     function activatePulseShield(ability) { createPulseEffect(player.x, player.y, ability.radius, 'lightblue', 400); applyForceField(ability); }
     function activateTimeSlow(ability) { if (!abilityActiveStates.timeSlowActive) { abilityActiveStates.timeSlowActive = true; abilityActiveStates.timeSlowTimer = ability.duration; console.log("Time slow activated!"); } }
     function activateHomingMine(ability) { obstacles.homingMines.push({ x: player.x, y: player.y, size: ability.size, speed: ability.mineSpeed, life: ability.mineLife, target: null, explosionRadius: ability.explosionRadius, type: 'homingMine' }); createParticles(player.x, player.y, 'grey', 8); }
-    function activateChainLightning(ability) { const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; let targetsFound = 0; let potentialTargets = []; enemyTypes.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy)) return; const dx = enemy.x - player.x; const dy = enemy.y - player.y; const distSq = dx * dx + dy * dy; if (distSq < ability.range * ability.range) { potentialTargets.push({ obj: enemy, type: type, distSq: distSq }); } }); }); potentialTargets.sort((a, b) => a.distSq - b.distSq); let lastTargetPos = { x: player.x, y: player.y }; for (let i = 0; i < potentialTargets.length && targetsFound < ability.maxTargets; i++) { const target = potentialTargets[i]; const targetObj = target.obj; const targetType = target.type; const targetIndex = obstacles[targetType].indexOf(targetObj); if (targetIndex > -1) { obstacles.lightningBolts.push({ x1: lastTargetPos.x, y1: lastTargetPos.y, x2: targetObj.x, y2: targetObj.y, life: 200, maxLife: 200 }); obstacles[targetType].splice(targetIndex, 1); createExplosion(targetObj.x, targetObj.y, 'yellow', 15); lastTargetPos = { x: targetObj.x, y: targetObj.y }; targetsFound++; } } console.log(`Chain Lightning hit ${targetsFound} targets.`); if (targetsFound === 0) { createParticles(player.x, player.y, 'yellow', 5); } }
+    function activateChainLightning(ability) { const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; let targetsFound = 0; let potentialTargets = []; enemyTypes.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy) || isEnemyStunned(enemy)) return; const dx = enemy.x - player.x; const dy = enemy.y - player.y; const distSq = dx * dx + dy * dy; if (distSq < ability.range * ability.range) { potentialTargets.push({ obj: enemy, type: type, distSq: distSq }); } }); }); potentialTargets.sort((a, b) => a.distSq - b.distSq); let lastTargetPos = { x: player.x, y: player.y }; for (let i = 0; i < potentialTargets.length && targetsFound < ability.maxTargets; i++) { const target = potentialTargets[i]; const targetObj = target.obj; const targetType = target.type; const targetIndex = obstacles[targetType].indexOf(targetObj); if (targetIndex > -1) { obstacles.lightningBolts.push({ x1: lastTargetPos.x, y1: lastTargetPos.y, x2: targetObj.x, y2: targetObj.y, life: 200, maxLife: 200 }); obstacles[targetType].splice(targetIndex, 1); createExplosion(targetObj.x, targetObj.y, 'yellow', 15); lastTargetPos = { x: targetObj.x, y: targetObj.y }; targetsFound++; } } console.log(`Chain Lightning hit ${targetsFound} targets.`); if (targetsFound === 0) { createParticles(player.x, player.y, 'yellow', 5); } }
     function activateRepulsionField(ability) { if (!abilityActiveStates.repulsionFieldActive) { abilityActiveStates.repulsionFieldActive = true; abilityActiveStates.repulsionFieldTimer = ability.duration; console.log("Repulsion Field activated!"); createPulseEffect(player.x, player.y, ability.radius, 'rgba(100,100,255,0.5)', 300); } }
     function activateGhostForm(ability) { if (player.state === PLAYER_STATE.ALIVE) { abilityActiveStates.ghostFormTimer = ability.duration; player.state = PLAYER_STATE.GHOST; if(ability.id === 'etherealShift') { abilityActiveStates.etherealShiftActive = true; } console.log("Ghost Form activated!"); createParticles(player.x, player.y, 'lightblue', 20); } }
-    function activateFreezeNova(ability) { console.log("Freeze Nova activated!"); createPulseEffect(player.x, player.y, ability.radius, 'rgba(173, 216, 230, 0.7)', 500); const freezeRadiusSq = ability.radius * ability.radius; const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines', 'lavaBlocks']; enemyTypes.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy)) return; const dx = enemy.x - player.x; const dy = enemy.y - player.y; const distSq = dx * dx + dy * dy; if (distSq < freezeRadiusSq) { abilityActiveStates.freezeNovaActiveEnemies.push({ enemy: enemy, timer: ability.duration }); createParticles(enemy.x, enemy.y, 'lightblue', 3); } }); }); }
+    function activateFreezeNova(ability) { console.log("Freeze Nova activated!"); createPulseEffect(player.x, player.y, ability.radius, 'rgba(173, 216, 230, 0.7)', 500); const freezeRadiusSq = ability.radius * ability.radius; const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines', 'lavaBlocks']; enemyTypes.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy) || isEnemyStunned(enemy)) return; // Don't freeze stunned
+             const dx = enemy.x - player.x; const dy = enemy.y - player.y; const distSq = dx * dx + dy * dy; if (distSq < freezeRadiusSq) { abilityActiveStates.freezeNovaActiveEnemies.push({ enemy: enemy, timer: ability.duration }); createParticles(enemy.x, enemy.y, 'lightblue', 3); } }); }); }
     function activateEmergencyShield(ability) { if (!player.shielded) { player.shielded = true; player.shieldTimer = ability.duration; console.log("Emergency Shield activated!"); createParticles(player.x, player.y, 'cyan', 25); } else { console.log("Shield already active."); lastAbilityUseTime = -Infinity; } }
     function activateClusterMine(ability) { obstacles.clusterMines.push({ x: player.x, y: player.y, size: ability.size, speed: ability.mineSpeed, life: ability.mineLife, target: null, type: 'clusterMine', ability: ability }); createParticles(player.x, player.y, '#555', 10); }
     function activateClusterMineExplosion(mine) { console.log("Cluster Mine Exploding!"); createExplosion(mine.x, mine.y, '#666', 20); const ability = mine.ability; if (!ability) return; for (let i = 0; i < ability.subMines; i++) { const subMine = { x: mine.x + (Math.random() - 0.5) * 10, y: mine.y + (Math.random() - 0.5) * 10, size: ability.subMineSize, speed: ability.subMineSpeed, life: ability.subMineLife, target: null, explosionRadius: 20, type: 'homingMine' }; obstacles.homingMines.push(subMine); } }
     function activateLightningStorm(ability) { if (!abilityActiveStates.lightningStormActive) { abilityActiveStates.lightningStormActive = true; abilityActiveStates.lightningStormTimer = ability.duration; abilityActiveStates.nextLightningStrike = Date.now(); console.log("Lightning Storm activated!"); } }
     function spawnLightningStrike(x, y, radius) { console.log("Lightning Strike at", x, y); obstacles.lightningStrikes.push({ x: x, y: y, radius: radius, life: 400, maxLife: 400, damaged: false }); }
-    function checkLightningStrikeDamage(strike) { const strikeRadiusSq = strike.radius * strike.radius; const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; let hitCount = 0; enemyTypes.forEach(type => { for(let i = obstacles[type].length - 1; i >= 0; i--) { const enemy = obstacles[type][i]; if(isEnemyFrozen(enemy)) continue; const enemySize = enemy.size || (enemy.width + enemy.height) / 2 || 10; const checkRadiusSq = (strike.radius + enemySize / 2) * (strike.radius + enemySize / 2); const dx = enemy.x - strike.x; const dy = enemy.y - strike.y; if (dx * dx + dy * dy < checkRadiusSq) { console.log("Lightning hit enemy type:", type); obstacles[type].splice(i, 1); createExplosion(enemy.x, enemy.y, 'yellow', 8); hitCount++; } } }); }
+    function checkLightningStrikeDamage(strike) { const strikeRadiusSq = strike.radius * strike.radius; const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; let hitCount = 0; enemyTypes.forEach(type => { for(let i = obstacles[type].length - 1; i >= 0; i--) { const enemy = obstacles[type][i]; if(isEnemyFrozen(enemy) || isEnemyStunned(enemy)) continue; const enemySize = enemy.size || (enemy.width + enemy.height) / 2 || 10; const checkRadiusSq = (strike.radius + enemySize / 2) * (strike.radius + enemySize / 2); const dx = enemy.x - strike.x; const dy = enemy.y - strike.y; if (dx * dx + dy * dy < checkRadiusSq) { console.log("Lightning hit enemy type:", type); obstacles[type].splice(i, 1); createExplosion(enemy.x, enemy.y, 'yellow', 8); hitCount++; } } }); }
     function activateSingularityField(ability) { if (!abilityActiveStates.singularityFieldActive) { abilityActiveStates.singularityFieldActive = true; abilityActiveStates.singularityFieldTimer = ability.duration; console.log("Singularity Field activated!"); createPulseEffect(player.x, player.y, ability.radius, 'rgba(100,0,100,0.5)', 300); } }
     function activateCooldownRefresh(ability) { console.log("Cooldown Refresh activated!"); lastBoomerangTime = -BOOMERANG_COOLDOWN; if(boomerangCooldownFill) boomerangCooldownFill.style.width = '100%'; createParticles(player.x, player.y, 'cyan', 15); }
     function activatePhaseDash(ability) { if (player.state === PLAYER_STATE.ALIVE) { console.log("Phase Dash activated!"); player.state = PLAYER_STATE.DASHING; abilityActiveStates.phaseDashTimer = ability.duration; let dashAngle; if (currentKeyboardInput.dx !== 0 || currentKeyboardInput.dy !== 0) { dashAngle = Math.atan2(currentKeyboardInput.dy, currentKeyboardInput.dx); } else if (lastMoveDir.x !== 0 || lastMoveDir.y !== 0) { dashAngle = Math.atan2(lastMoveDir.y, lastMoveDir.x); } else { dashAngle = 0; } const dashSpeed = ability.distance / (ability.duration / 1000); abilityActiveStates.phaseDashVx = Math.cos(dashAngle) * dashSpeed; abilityActiveStates.phaseDashVy = Math.sin(dashAngle) * dashSpeed; createParticles(player.x, player.y, 'lightblue', 10); } }
     function activateVampiricTouch(ability) { if (!abilityActiveStates.vampiricTouchActive) { abilityActiveStates.vampiricTouchActive = true; abilityActiveStates.vampiricTouchTimer = ability.duration; console.log("Vampiric Touch activated!"); createParticles(player.x, player.y, 'red', 15); } }
+    function activateBlackHole(ability) {
+        console.log("Black Hole activated!");
+        obstacles.blackHoles.push({
+            x: player.x + lastMoveDir.x * 50, // Deploy slightly ahead
+            y: player.y + lastMoveDir.y * 50,
+            radius: ability.radius,
+            life: ability.duration,
+            rotation: 0,
+        });
+        createPulseEffect(player.x, player.y, 50, 'rgba(50, 0, 80, 0.8)', 300);
+    }
+    function activateEnemyStun(ability) {
+        console.log("Enemy Stun activated!");
+        createPulseEffect(player.x, player.y, canvasWidth * 0.8, 'rgba(255, 255, 0, 0.5)', 600); // Visual effect
+        const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines', 'lavaBlocks']; // Include lava? Maybe not damaging ones? Adjust as needed.
+        let stunCount = 0;
+        enemyTypes.forEach(type => {
+            obstacles[type].forEach(enemy => {
+                if (!isEnemyStunned(enemy) && !isEnemyFrozen(enemy)) { // Don't stun already stunned/frozen
+                     abilityActiveStates.stunnedEnemies.push({ enemy: enemy, timer: ability.duration });
+                     createParticles(enemy.x, enemy.y, 'yellow', 3);
+                     stunCount++;
+                }
+            });
+        });
+        console.log(`Stunned ${stunCount} enemies.`);
+    }
 
     // --- Ability Helpers ---
-    function applyForceField(ability) { const radiusSq = ability.radius * ability.radius; const force = ability.force; const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; enemyTypes.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy)) return; const dx = enemy.x - player.x; const dy = enemy.y - player.y; const distSq = dx * dx + dy * dy; if (distSq < radiusSq && distSq > 1) { const dist = Math.sqrt(distSq); const forceMagnitude = force * (1 - dist / ability.radius); const pushX = (dx / dist) * forceMagnitude; const pushY = (dy / dist) * forceMagnitude; if (enemy.dx !== undefined) { enemy.dx += pushX; enemy.dy += pushY; } else if (enemy.vx !== undefined) { enemy.vx += pushX; enemy.vy += pushY; } else { enemy.x += pushX * 0.5; enemy.y += pushY * 0.5; } } }); }); }
+    function applyForceField(ability) { const radiusSq = ability.radius * ability.radius; const force = ability.force; const enemyTypes = ['balls', 'miniBalls', 'dashers', 'spawnerBalls', 'homingMines', 'clusterMines']; enemyTypes.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy) || isEnemyStunned(enemy)) return; const dx = enemy.x - player.x; const dy = enemy.y - player.y; const distSq = dx * dx + dy * dy; if (distSq < radiusSq && distSq > 1) { const dist = Math.sqrt(distSq); const forceMagnitude = force * (1 - dist / ability.radius); const pushX = (dx / dist) * forceMagnitude; const pushY = (dy / dist) * forceMagnitude; if (enemy.dx !== undefined) { enemy.dx += pushX; enemy.dy += pushY; } else if (enemy.vx !== undefined) { enemy.vx += pushX; enemy.vy += pushY; } else { enemy.x += pushX * 0.5; enemy.y += pushY * 0.5; } } }); }); }
     function isEnemyFrozen(enemy) { return abilityActiveStates.freezeNovaActiveEnemies.some(f => f.enemy === enemy); }
+    function isEnemyStunned(enemy) { return abilityActiveStates.stunnedEnemies.some(s => s.enemy === enemy); }
     function unfreezeAllEnemies() { abilityActiveStates.freezeNovaActiveEnemies = []; console.log("Unfroze all enemies."); }
-    function findNearestEnemy(x, y, types) { let nearest = null; let minDistSq = Infinity; types.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy)) return; const dx = enemy.x - x; const dy = enemy.y - y; const distSq = dx * dx + dy * dy; if (distSq < minDistSq) { minDistSq = distSq; nearest = {obj: enemy, type: type}; } }); }); return nearest; }
+    function unstunAllEnemies() { abilityActiveStates.stunnedEnemies = []; console.log("Unstunned all enemies."); }
+    function findNearestEnemy(x, y, types) { let nearest = null; let minDistSq = Infinity; types.forEach(type => { obstacles[type].forEach(enemy => { if (isEnemyFrozen(enemy) || isEnemyStunned(enemy)) return; const dx = enemy.x - x; const dy = enemy.y - y; const distSq = dx * dx + dy * dy; if (distSq < minDistSq) { minDistSq = distSq; nearest = {obj: enemy, type: type}; } }); }); return nearest; }
 
     // --- Effects Functions ---
     function createParticles(x, y, color, count) { for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 4 + 1; particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1, size: Math.random() * 2.5 + 1, life: 400 + Math.random() * 400, maxLife: 400 + Math.random() * 400, color: color, alpha: 1 }); } }
