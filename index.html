@@ -1,99 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CANVAS_ERROR</title>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      background-color: #000;
-      color: #fff;
-      font-family: 'Rubik', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-image: url('anime-background.png');
-      background-size: cover;
-      background-blend-mode: multiply;
-    }
-    .container {
-      text-align: center;
-    }
-    h1 {
-      font-size: 3rem;
-      text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-      margin-bottom: 10px;
-    }
-    .subtext {
-      font-size: 1rem;
-      color: rgba(255, 255, 255, 0.7);
-      margin-bottom: 30px;
-    }
-    .xeno-button {
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      color: white;
-      padding: 18px 50px;
-      margin: 10px;
-      font-size: 1.2rem;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s, background 0.3s;
-      display: inline-block;
-    }
-    .xeno-button:hover {
-      transform: translateY(-5px);
-      border-color: rgba(255, 255, 255, 1);
-      background: rgba(255, 255, 255, 0.2);
-    }
-    .xeno-button:active {
-      transform: translateY(2px);
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>deleted</title>
 </head>
 <body>
-  <div class="container">
-    <h1 id="link-count">restocked links | current links: loading...</h1>
-    <p class="subtext">new website up for a year (only 0.70$ what a steal)</p>
-    <button class="xeno-button" onclick="xenovoidAccess('sigmaboy.txt')">game site</button>
-  </div>
-
-  <script>
-    async function xenovoidAccess(gatePath) {
-      try {
-        const response = await fetch(gatePath);
-        const gateData = await response.text();
-        const portalLinks = gateData.split('\n').filter(link => link.trim() !== '');
-        document.getElementById('link-count').textContent = 'current links: ' + portalLinks.length;
-        
-        if (portalLinks.length === 0) {
-          alert('No gateways detected in ' + gatePath);
-          return;
-        }
-        const selectedPortal = portalLinks[Math.floor(Math.random() * portalLinks.length)];
-        window.open(selectedPortal, '_blank');
-      } catch (error) {
-        console.error('Xenovoid failure at ' + gatePath + ':', error);
-        alert('PAWN ' + gatePath);
-      }
-    }
-
-    async function updateLinkCount() {
-      try {
-        const response = await fetch('sigmaboy.txt');
-        const gateData = await response.text();
-        const portalLinks = gateData.split('\n').filter(link => link.trim() !== '');
-        document.getElementById('link-count').textContent = 'current links: ' + portalLinks.length;
-      } catch (error) {
-        console.error('Failed to fetch link count:', error);
-        document.getElementById('link-count').textContent = 'current links: error';
-      }
-    }
-
-    updateLinkCount();
-  </script>
+  <h1>New Game <a href="https://teaching.za.com/chaos">Click Here</a></h1>
 </body>
 </html>
