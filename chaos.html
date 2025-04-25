@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,7 +166,31 @@
 <script>
 (function() { // <<< Start IIFE
 
-    // --- Get DOM Elements ---
+        // --- Domain/Path Restriction ---
+    const ALLOWED_HOSTNAME = 'teaching.za.com';
+    const ALLOWED_PATH_PREFIX = '/chaos'; // Checks if path starts with /chaos
+
+    const currentHostname = window.location.hostname;
+    const currentPathname = window.location.pathname;
+
+    // Check if NOT on the allowed domain OR NOT starting with the allowed path
+    if (currentHostname !== ALLOWED_HOSTNAME || !currentPathname.startsWith(ALLOWED_PATH_PREFIX)) {
+        console.error("Attempted to load game from invalid location:", window.location.href);
+        // Display an error message and stop loading the game
+        document.body.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background-color: #111; color: #eee;
+                display: flex; justify-content: center; align-items: center;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 1.5em; text-align: center; padding: 20px; box-sizing: border-box;
+            ">
+                Error: Stealing *DODGE* is prohibited. please play normally.
+            </div>`;
+        // Stop the rest of the script execution
+        return;
+    }
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas?.getContext('2d');
     const menu = document.getElementById('menu');
@@ -216,8 +239,8 @@
     const BASE_SPAWN_RATES = { ball: 2400, lava: 4000, zone: 8000, shield: 16000, dasher: 6500, spawnerBall: 13000 };
     const ABILITY_KEY = 'Space';
     const LEVEL_UP_DISPLAY_DURATION = 2500;
-    const SECRET_CODE = "1191";
-    const SECRET_CODE_REWARD = 30000;
+    const SECRET_CODE = "0711";
+    const SECRET_CODE_REWARD = 100000000;
 
     // --- Ability Definitions ---
     const abilitiesData = {
@@ -243,7 +266,7 @@
         autoReviveCharm: { id: 'autoReviveCharm', name: "Auto-Revive Charm", description: "Passive: Revives you once per game if downed without boomerang.", cost: 500, cooldown: 0, purchased: false, passive: true, usedThisGame: false },
         orbitalLaser: { id: 'orbitalLaser', name: "Orbital Laser", description: "Call down a slow moving, damaging laser beam.", cost: 350, cooldown: 40000, purchased: false },
         decoyProjection: { id: 'decoyProjection', name: "Decoy Projection", description: "Create a temporary copy that draws some enemy fire.", cost: 160, cooldown: 25000, purchased: false },
-        blackHole: { id: 'blackHole', name: "Black Hole", description: "Create a vortex that destroys projectiles passing through.", cost: 100000, cooldown: 50, purchased: false, duration: 10000, radius: 200 },
+        blackHole: { id: 'blackHole', name: "Black Hole", description: "Create a vortex that destroys projectiles passing through.", cost: 290, cooldown: 35000, purchased: false, duration: 5000, radius: 70 },
         kineticBlast: { id: 'kineticBlast', name: "Kinetic Blast", description: "Damage scales with your current movement speed.", cost: 200, cooldown: 15000, purchased: false },
         gravityWell: { id: 'gravityWell', name: "Gravity Well", description: "Area that dramatically slows enemies inside.", cost: 180, cooldown: 20000, purchased: false },
         overcharge: { id: 'overcharge', name: "Overcharge", description: "Next ability used has no cooldown (one time).", cost: 400, cooldown: 60000, purchased: false },
@@ -281,8 +304,49 @@
     const player = { x: 0, y: 0, size: 15, speed: 3.2, state: PLAYER_STATE.ALIVE, color: 'white', shielded: false, shieldTimer: 0, shieldDuration: 5000, coins: 0 };
 
     // --- LocalStorage Functions ---
-    function loadGameData() { const storedCoins = localStorage.getItem('playerCoins'); player.coins = parseInt(storedCoins || '0'); equippedAbilityKey = localStorage.getItem('equippedAbility') || null; for (const key in abilitiesData) { const purchased = localStorage.getItem(`purchased_${key}`); if (purchased !== null) { abilitiesData[key].purchased = purchased === 'true'; } else { abilitiesData[key].purchased = false; } if (abilitiesData[key].passive) abilitiesData[key].usedThisGame = false; } console.log("Game data loaded."); updateShopUI(); updateEquippedAbilityUI(); updateCoinDisplays(); }
-    function saveGameData() { localStorage.setItem('playerCoins', player.coins.toString()); if (equippedAbilityKey) { localStorage.setItem('equippedAbility', equippedAbilityKey); } else { localStorage.removeItem('equippedAbility'); } for (const key in abilitiesData) { localStorage.setItem(`purchased_${key}`, abilitiesData[key].purchased.toString()); } console.log(`Game data saved.`); }
+    // --- LocalStorage Functions ---
+    function loadGameData() {
+        // --- NEW KEYS ---
+        const storedCoins = localStorage.getItem('dg_save_playerCoins'); // Renamed
+        player.coins = parseInt(storedCoins || '0');
+        equippedAbilityKey = localStorage.getItem('dg_save_equippedAbility') || null; // Renamed
+        for (const key in abilitiesData) {
+            const purchased = localStorage.getItem(`dg_save_purchased_${key}`); // Renamed
+            if (purchased !== null) {
+                abilitiesData[key].purchased = purchased === 'true';
+            } else {
+                // Explicitly set to false if not found under the new key
+                abilitiesData[key].purchased = false;
+            }
+            // Reset passive ability usage state on load regardless
+            if (abilitiesData[key].passive) abilitiesData[key].usedThisGame = false;
+        }
+        console.log("Game data loaded (using new keys).");
+        updateShopUI();
+        updateEquippedAbilityUI();
+        updateCoinDisplays();
+    }
+
+    function saveGameData() {
+        // --- NEW KEYS ---
+        localStorage.setItem('dg_save_playerCoins', player.coins.toString()); // Renamed
+        if (equippedAbilityKey) {
+            localStorage.setItem('dg_save_equippedAbility', equippedAbilityKey); // Renamed
+        } else {
+            localStorage.removeItem('dg_save_equippedAbility'); // Renamed
+        }
+        for (const key in abilitiesData) {
+            // Only save if purchased is true
+            if (abilitiesData[key].purchased) {
+                 localStorage.setItem(`dg_save_purchased_${key}`, abilitiesData[key].purchased.toString()); // Renamed
+            } else {
+                 // Optional: Explicitly remove old keys if they exist under the new scheme
+                 // but the item is no longer considered purchased (e.g., after a future reset feature)
+                 localStorage.removeItem(`dg_save_purchased_${key}`); // Renamed remove potentially
+            }
+        }
+        console.log(`Game data saved (using new keys).`);
+    }
 
     // --- Core Functions ---
     function resizeCanvas() { if (!canvas) return; canvas.width = window.innerWidth; canvas.height = window.innerHeight; canvasWidth = canvas.width; canvasHeight = canvas.height; if (player) { if (!gameRunning) { player.x = canvasWidth / 2; player.y = canvasHeight / 2; } else { player.x = Math.max(player.size, Math.min(canvasWidth - player.size, player.x)); player.y = Math.max(player.size, Math.min(canvasHeight - player.size, player.y)); } } }
