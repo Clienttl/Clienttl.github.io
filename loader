@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nginx.handler.error</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Press Start 2P', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            background-color: #080324; /* Deep space background */
+            overflow: hidden;
+        }
+
+        #input-container {
+            display: none;
+            margin-top: 70px;
+            margin-bottom: 20px;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out; /* Increased transition time */
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            width: 100%;
+            max-width: 400px;
+            padding-left: 20px;
+            padding-right: 20px;
+            box-sizing: border-box;
+            z-index: 11;
+            background: rgba(10, 10, 30, 0.8); /* Dark semi-transparent background for input */
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7); /* Stronger shadow */
+            backdrop-filter: blur(10px);
+        }
+
+        #input-container.show {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            max-height: 500px;
+            opacity: 1;
+            padding-bottom: 30px; /* Increased padding */
+            margin-bottom: 30px; /* Increased margin */
+        }
+
+        #website-input {
+            padding: 15px;
+            width: calc(100% - 30px);
+            border: 2px solid #8e44ad; /* Vibrant purple border */
+            border-radius: 8px;
+            font-size: 18px; /* Increased font size */
+            margin-top: 15px; /* Increased margin */
+            background-color: #1a0033;
+            color: #ffdb58;
+            font-family: 'Press Start 2P', sans-serif;
+            outline: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7); /* More pronounced shadow */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Added transitions */
+        }
+
+        #website-input:focus {
+            border-color: #ff6b81; /* Hot pink focus border */
+            box-shadow: 0 0 10px #ff6b81; /* Glowing effect */
+        }
+
+        #webpage-frame {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            border: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            opacity: 0; /* Start with 0 opacity */
+            transition: opacity 0.5s ease; /* Fade-in transition */
+        }
+
+        #webpage-frame.loaded {
+            opacity: 1; /* Set opacity to 1 when loaded */
+        }
+
+        #toggle-input {
+            margin-top: 30px; /* Increased margin */
+            font-size: 4em; /* Even larger size */
+            cursor: pointer;
+            color: #4a148c; /* Darker purple */
+            transition: transform 0.3s ease-in-out, color 0.3s ease, text-shadow 0.3s ease; /* Added text-shadow transition */
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8); /* More pronounced shadow */
+            animation: pulse 2s infinite alternate; /* Add pulse animation */
+        }
+
+        #toggle-input:hover {
+            color: #ff6b81;
+            transform: scale(1.2); /* Stronger scale */
+            text-shadow: 0 0 15px #ff6b81; /* Glowing shadow on hover */
+        }
+
+        #toggle-input.active {
+            transform: rotate(180deg);
+        }
+
+        label {
+            display: none;
+        }
+
+        /* Keyframes for pulse animation */
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        /* Loading animation styles */
+        #loading-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 12;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 5px solid #8e44ad; /* Purple border */
+            border-top-color: #ff6b81; /* Pink top border */
+            animation: spin 1s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #loading-animation.show {
+            opacity: 1;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-animation"></div>
+    <i id="toggle-input" class="fas fa-space-shuttle"></i>
+    <div id="input-container">
+        <input type="text" id="website-input" placeholder="Enter destination URL..." />
+    </div>
+    <iframe id="webpage-frame"></iframe>
+    <script>
+        const toggleInputButton = document.getElementById('toggle-input');
+        const inputContainer = document.getElementById('input-container');
+        const websiteInput = document.getElementById('website-input');
+        const webpageFrame = document.getElementById('webpage-frame');
+        const loadingAnimation = document.getElementById('loading-animation');
+
+        toggleInputButton.addEventListener('click', () => {
+            inputContainer.classList.toggle('show');
+            toggleInputButton.classList.toggle('active');
+            if (inputContainer.classList.contains('show')) {
+                websiteInput.focus(); // Focus input when shown
+            }
+        });
+
+        websiteInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                const website = websiteInput.value;
+                if (website) {
+                    let validWebsite = website;
+                    if (!validWebsite.startsWith('http://') && !validWebsite.startsWith('https://')) {
+                        validWebsite = 'https://' + validWebsite;
+                    }
+                    loadingAnimation.classList.add('show'); // Show loading animation
+                    webpageFrame.classList.remove('loaded');
+                    webpageFrame.src = validWebsite;
+
+                    webpageFrame.onload = () => {
+                        loadingAnimation.classList.remove('show'); // Hide loading animation
+                        webpageFrame.classList.add('loaded'); // Add loaded class to iframe
+                    };
+                    webpageFrame.onerror = () => {
+                        loadingAnimation.classList.remove('show');
+                        alert("Failed to load website. Please check the URL and try again.");
+                        webpageFrame.src = ""; //clear frame on error
+                    }
+                    webpageFrame.style.display = 'block';
+                } else {
+                    alert('Please enter a website address.');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
