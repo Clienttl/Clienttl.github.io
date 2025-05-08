@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Website to Fullscreen Iframe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        div {
+            text-align: center;
+            padding: 20px;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            max-width: 400px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        #iframeContainer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <p>Enter a website URL to display in full screen:</p>
+        <input type="text" id="websiteInput" placeholder="Enter URL (e.g., https://www.example.com)">
+        <button id="displayButton">Go Fullscreen</button>
+    </div>
+
+    <div id="iframeContainer">
+        <iframe id="websiteFrame" src=""></iframe>
+    </div>
+
+    <script>
+        const websiteInput = document.getElementById("websiteInput");
+        const displayButton = document.getElementById("displayButton");
+        const iframeContainer = document.getElementById("iframeContainer");
+        const websiteFrame = document.getElementById("websiteFrame");
+
+        displayButton.addEventListener("click", function() {
+            const url = websiteInput.value;
+            if (url) {
+                let validUrl = url;
+                if (!validUrl.startsWith("http://") && !validUrl.startsWith("https://")) {
+                    validUrl = "https://" + validUrl; // Add https if no protocol
+                }
+                websiteFrame.src = validUrl;
+                iframeContainer.style.display = "block";
+            } else {
+                alert("Please enter a website URL.");
+            }
+        });
+    </script>
+</body>
+</html>
